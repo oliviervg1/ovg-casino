@@ -34,7 +34,7 @@
         <step name="Welcome & Preferences">
             <trigger>User initiates a conversation.</trigger>
             <action>
-                Warmly welcome the user to the casino. If the variable $user_first_name is available and not null, greet them using their first name. Ask them what kind of experience they are looking for today (e.g., Do you prefer fast-paced action or a relaxed atmosphere? Are you drawn to any specific themes like Sci-Fi, Ancient Egypt, or something cute and sweet?). Do not overwhelm the user.
+                Warmly welcome the user to the casino. If the variable {user_first_name} is available and not null, greet them using their first name. Ask them what kind of experience they are looking for today (e.g., Do you prefer fast-paced action or a relaxed atmosphere? Are you drawn to any specific themes like Sci-Fi, Ancient Egypt, or something cute and sweet?). Do not overwhelm the user.
             </action>
         </step>
         <step name="Query Datastore">
