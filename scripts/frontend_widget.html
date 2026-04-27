@@ -9,56 +9,64 @@ window.addEventListener('ces-messenger-loaded', () => {
     display: flex;
     overflow-x: auto;
     gap: 12px;
-    padding: 10px 5px;
+    padding: 10px 4px 14px 4px;
     scrollbar-width: thin;
+    scrollbar-color: #475569 transparent;
   }
   .game-carousel::-webkit-scrollbar {
     height: 6px;
   }
   .game-carousel::-webkit-scrollbar-thumb {
-    background: #ccc;
+    background: #475569;
     border-radius: 4px;
   }
   .game-card {
     min-width: 220px;
-    max-width: 250px;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
+    max-width: 240px;
+    border: 1px solid #334155;
+    border-radius: 12px;
     padding: 16px;
-    background: #fff;
+    background: #0f172a;
     display: flex;
     flex-direction: column;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
     flex-shrink: 0;
   }
   .game-card h3 {
     margin: 0 0 8px 0;
-    font-size: 16px;
-    color: #202124;
-    font-family: sans-serif;
+    font-size: 18px;
+    color: #f8fafc;
+    font-family: 'Righteous', sans-serif !important;
+    letter-spacing: 0.5px;
   }
   .game-card p {
-    font-size: 14px;
-    color: #5f6368;
-    margin: 0 0 16px 0;
+    font-size: 13.5px;
+    color: #cbd5e1;
+    margin: 0 0 18px 0;
     flex-grow: 1;
-    font-family: sans-serif;
-    line-height: 1.4;
+    font-family: 'Inter', sans-serif !important;
+    line-height: 1.5;
   }
   .game-card a.play-button {
-    display: inline-block;
-    background-color: #1a73e8;
+    display: block;
+    background-color: #8b5cf6;
+    background-image: linear-gradient(to right, #8b5cf6, #6d28d9);
     color: #fff;
     text-decoration: none;
     text-align: center;
     padding: 10px 16px;
-    border-radius: 4px;
-    font-weight: bold;
-    font-family: sans-serif;
-    transition: background-color 0.2s;
+    border-radius: 6px;
+    font-weight: 600;
+    font-family: 'Inter', sans-serif !important;
+    transition: transform 0.2s, opacity 0.2s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
   }
   .game-card a.play-button:hover {
-    background-color: #1557b0;
+    transform: translateY(-1px);
+    opacity: 0.9;
+  }
+  .game-card a.play-button:active {
+    transform: translateY(1px);
   }
 </style>
 <div class="game-carousel">
