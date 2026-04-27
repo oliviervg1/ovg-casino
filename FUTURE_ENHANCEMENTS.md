@@ -5,22 +5,16 @@ The **OVG Casino Concierge** is a highly capable virtual assistant built on **Go
 Currently, it successfully:
 1. Portrays a warm, upbeat, and professional casino host using the state-of-the-art `en-US-Chirp3-HD-Zephyr` voice model.
 2. Dynamically recommends games by querying a **Vertex AI Search Data Store**, which is backed by a **BigQuery** table containing 24 distinct games scraped from the casino's frontend.
-3. Handles conversational boundaries effectively, including terminating sessions gracefully using the `end_session` tool when a user says goodbye or exhibits gambling frustration.
-4. Enforces strict anti-hallucination constraints and provides localized responsible gaming resources (UK National Gambling Helpline).
+3. Renders engaging interactive UI components in the user's chat window using **Client Function Tools** piped to a custom Handlebars template (`game_carousel`) in the `ces-messenger` frontend framework.
+4. Switches seamlessly between multiple languages (`en-US`, `fr-FR`, `es-ES`) using the `enableMultilingualSupport` setting.
+5. Handles conversational boundaries effectively, including terminating sessions gracefully using the `end_session` tool when a user says goodbye or exhibits gambling frustration.
+6. Enforces strict anti-hallucination constraints and provides localized responsible gaming resources (UK National Gambling Helpline).
 
 While the foundational architecture is robust, there are several strategic improvements and new features that could elevate the user experience, operational efficiency, and overall safety.
 
 ---
 
-## 1. Conversational UX & Frontend Integrations
-
-### Rich Media & Interactive Widgets
-*   **Current State:** The agent responds with text and voice. The game catalog has been updated to include direct "Play Now" URLs (`url`), which the agent shares in conversation.
-*   **Improvement:** Implement **Widget Tools** in CX Agent Studio. When the agent recommends a game (e.g., *Tomb of Treasures*), it should return a rich UI card containing the game's theme imagery, description, and the direct "Play Now" deep link. This turns a conversational recommendation into an engaging visual call to action.
-
-### Multi-lingual Support
-*   **Current State:** The agent operates primarily in `en-US`.
-*   **Improvement:** Enable multi-lingual support in the app settings and translate the `system_instructions.md` into supported locales (e.g., `fr-FR`, `es-ES`). Google's Chirp models are polyglot, allowing the agent to seamlessly switch languages while maintaining the energetic concierge persona.
+## 1. Conversational UX Enhancements
 
 ### Proactive Follow-ups
 *   **Current State:** The agent waits for user prompts.

@@ -34,16 +34,21 @@ ces/
 
 ## Features & Implementation Details
 
-### 1. Dynamic Game Recommendations
-The agent is capable of asking users about their preferred themes or playstyles and dynamically searching the casino's catalog to provide a grounded recommendation, including a direct link to play the game immediately.
+### 1. Dynamic Game Recommendations & Rich Widgets
+The agent is capable of asking users about their preferred themes or playstyles and dynamically searching the casino's catalog to provide a grounded recommendation. Instead of just replying with text, it renders a rich visual UI card (a carousel) for the user to interact with, complete with a direct link to play.
 
 *   **Data Source:** Game data (including direct play URLs) was scraped from the frontend Javascript of `https://casino.oliviervg.com`.
 *   **Storage:** The 24-game catalog is stored in a BigQuery table (`ovg_casino.games_inventory`).
 *   **Search Engine:** A Vertex AI Search Data Store (`ovg_casino_games_catalog`) and Engine (`ovg_casino_games_engine`) index the BigQuery table as *Structured Data*.
-*   **Agent Tool:** The agent uses a Datastore Tool named `search_available_games` linked to the Vertex Search Engine.
+*   **Agent Tool:** The agent uses a Datastore Tool named `search_available_games` to retrieve raw JSON matching games, and a Client Function Tool named `display_game_widget` to pipe that data to the frontend for rendering.
+*   **Frontend Integration:** The UI is rendered using `ces-messenger` combined with a custom Handlebars template (`game_carousel`) injected onto the page via `scripts/frontend_widget.html`.
 *   **Anti-Hallucination:** The agent's instructions contain strict constraints forcing it to *only* recommend games explicitly returned by the `search_available_games` tool.
 
-### 2. Responsible Gaming & Session Management
+### 2. Multi-lingual Support
+*   The agent is configured with `enableMultilingualSupport` to gracefully switch context and respond in the user's preferred language.
+*   Supported Locales: English (`en-US`), French (`fr-FR`), and Spanish (`es-ES`).
+
+### 3. Responsible Gaming & Session Management
 *   The agent detects frustration or mentions of gambling problems.
 *   It is instructed to provide an empathetic response and offer the UK National Gambling Helpline (`0808 8020 133`).
 *   After offering support, or when a user indicates the conversation is over, the agent utilizes the built-in `end_session` tool (with `reason="gambling_concerns"` or `reason="customer_query_ended"`) to gracefully close the interaction.

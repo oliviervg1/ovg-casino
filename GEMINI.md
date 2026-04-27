@@ -10,7 +10,9 @@ Please adhere to the following guidelines and architectural constraints when con
 *   **`data/`**: 
     *   `raw/games.md`: Human-readable game catalog scraped from the casino frontend (includes direct URLs).
     *   `processed/games_catalog.csv`: Structured CSV data used to populate the Vertex AI Search Data Store (includes the `url` column).
-*   **`scripts/`**: Contains utility scripts (e.g., `parse_games_to_csv.py`) used for data extraction and transformation.
+*   **`scripts/`**: 
+    *   `parse_games_to_csv.py` / `update_games_md.py`: Python scripts for data extraction and transformation.
+    *   `frontend_widget.html`: JavaScript and Handlebars frontend snippet required to map and render the UI cards inside the `ces-messenger` web component.
 
 ## 2. CX Agent Studio Best Practices
 
@@ -28,10 +30,12 @@ In `<examples>` (Few-Shot Prompting), represent a tool call like this:
 <agent>Natural language response based on the data.</agent>
 ```
 
-### Anti-Hallucination & Constraints
-Generative agents can hallucinate tool responses or skip tool calls. Always enforce tool usage with strict `<constraint>` tags:
-*   *"You must use the `[tool_name]` tool to answer..."*
-*   *"Only recommend items explicitly returned by the tool. Do not hallucinate."*
+### UI Widgets & Client Functions
+The `ces-messenger` frontend framework doesn't support CX Agent Studio's native `WidgetTool` components (like `PRODUCT_CAROUSEL`). 
+To render rich UI cards, we use a custom architecture:
+1.  **Backend Tool:** The `display_game_widget` tool is configured as a **Client Function** tool.
+2.  **LLM Execution:** The LLM executes the tool with `template_id: "game_carousel"` and passes an array of objects under `context.games`.
+3.  **Frontend Render:** The `scripts/frontend_widget.html` code is embedded on the site. `ces-messenger` intercepts the client function call and renders the data using the custom `game_carousel` Handlebars template.
 
 ### Tone and Voice
 The agent uses the `en-US-Chirp3-HD-Zephyr` voice model. The prompt tone should be configured as **Warm, Upbeat, Approachable, Professional, and Responsible**. Keep responses concise (2-3 sentences) so the text-to-speech output doesn't sound like a monologue.
