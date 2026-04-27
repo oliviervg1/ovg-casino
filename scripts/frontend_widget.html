@@ -1,0 +1,77 @@
+<script src="https://cdn.jsdelivr.net/npm/handlebars@latest/dist/handlebars.js"></script>
+<script>
+window.addEventListener('ces-messenger-loaded', () => {
+  const cesMessenger = document.querySelector('ces-messenger');
+
+  const templateString = `
+<style>
+  .game-carousel {
+    display: flex;
+    overflow-x: auto;
+    gap: 12px;
+    padding: 10px 5px;
+    scrollbar-width: thin;
+  }
+  .game-carousel::-webkit-scrollbar {
+    height: 6px;
+  }
+  .game-carousel::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 4px;
+  }
+  .game-card {
+    min-width: 220px;
+    max-width: 250px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 16px;
+    background: #fff;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    flex-shrink: 0;
+  }
+  .game-card h3 {
+    margin: 0 0 8px 0;
+    font-size: 16px;
+    color: #202124;
+    font-family: sans-serif;
+  }
+  .game-card p {
+    font-size: 14px;
+    color: #5f6368;
+    margin: 0 0 16px 0;
+    flex-grow: 1;
+    font-family: sans-serif;
+    line-height: 1.4;
+  }
+  .game-card a.play-button {
+    display: inline-block;
+    background-color: #1a73e8;
+    color: #fff;
+    text-decoration: none;
+    text-align: center;
+    padding: 10px 16px;
+    border-radius: 4px;
+    font-weight: bold;
+    font-family: sans-serif;
+    transition: background-color 0.2s;
+  }
+  .game-card a.play-button:hover {
+    background-color: #1557b0;
+  }
+</style>
+<div class="game-carousel">
+  {{#each games}}
+  <div class="game-card">
+    <h3>{{title}}</h3>
+    <p>{{subtitle}}</p>
+    <a href="{{uri}}" target="_blank" class="play-button">Play Now</a>
+  </div>
+  {{/each}}
+</div>`;
+
+  const compiledTemplate = Handlebars.compile(templateString);
+  cesMessenger.registerTemplate('game_carousel', compiledTemplate);
+});
+</script>
