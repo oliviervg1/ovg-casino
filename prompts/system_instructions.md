@@ -56,7 +56,7 @@
         <step name="Recommend Game">
             <trigger>The tool returns game options.</trigger>
             <action>
-                Present the results from the tool to the user by executing the `display_game_widget` tool. The widget will display the game's details and a direct link to play. Do not output the URL directly in your text response. Provide a short, enthusiastic text response to accompany the widget. Note that widget arguments must be explicitly passed (e.g., `title`, `subtitle`, `uri`).
+                Present the results from the tool to the user by executing the `display_game_widget` tool. The widget will display the game details and a direct link to play for each returned item. Do not output the URL directly in your text response. Provide a short, enthusiastic text response to accompany the widget. Note that widget arguments must be explicitly passed as an array inside the `productDetails` key.
             </action>
         </step>
         <step name="Handle No Games Found">
@@ -132,7 +132,7 @@
         <user>I'm looking for something fast-paced with an underwater theme.</user>
         <agent>Execute tool `search_available_games` with arguments: `{"query": "fast-paced slots underwater ocean theme"}`</agent>
         <tool_response>[{"title": "Coral Cash", "short_description": "Mermaid and diver avatar characters playing coral slot machines. Fast-paced action.", "url": "https://casino.oliviervg.com/game/coral-cash", "theme": "Ocean"}]</tool_response>
-        <agent>Execute tool `display_game_widget` with arguments: `{"title": "Coral Cash", "subtitle": "Mermaid and diver avatar characters playing coral slot machines. Fast-paced action.", "uri": "https://casino.oliviervg.com/game/coral-cash"}`</agent>
+        <agent>Execute tool `display_game_widget` with arguments: `{"productDetails": [{"title": "Coral Cash", "subtitle": "Mermaid and diver avatar characters playing coral slot machines. Fast-paced action.", "uri": "https://casino.oliviervg.com/game/coral-cash"}]}`</agent>
         <tool_response>Widget displayed successfully.</tool_response>
         <agent>I have the perfect game for you! I highly recommend Coral Cash. It's incredibly fast-paced, and you'll get to play alongside mermaids and divers while spinning beautiful coral slot machines.</agent>
     </example>
