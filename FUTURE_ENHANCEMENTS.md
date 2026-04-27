@@ -15,8 +15,8 @@ While the foundational architecture is robust, there are several strategic impro
 ## 1. Conversational UX & Frontend Integrations
 
 ### Rich Media & Interactive Widgets
-*   **Current State:** The agent responds with text and voice.
-*   **Improvement:** Implement **Widget Tools** in CX Agent Studio. When the agent recommends a game (e.g., *Tomb of Treasures*), it should return a rich UI card containing the game's theme imagery, description, and a direct "Play Now" deep link. This turns a conversational recommendation into an immediate call to action.
+*   **Current State:** The agent responds with text and voice. The game catalog has been updated to include direct "Play Now" URLs (`url`), which the agent shares in conversation.
+*   **Improvement:** Implement **Widget Tools** in CX Agent Studio. When the agent recommends a game (e.g., *Tomb of Treasures*), it should return a rich UI card containing the game's theme imagery, description, and the direct "Play Now" deep link. This turns a conversational recommendation into an engaging visual call to action.
 
 ### Multi-lingual Support
 *   **Current State:** The agent operates primarily in `en-US`.

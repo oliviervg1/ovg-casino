@@ -8,8 +8,8 @@ Please adhere to the following guidelines and architectural constraints when con
 
 *   **`prompts/system_instructions.md`**: This is the source of truth for the agent's behavior. It uses XML tags (`<role>`, `<persona>`, `<constraints>`, `<taskflow>`, `<examples>`). All changes to the agent's logic, tone, or tool usage must be updated here first.
 *   **`data/`**: 
-    *   `raw/games.md`: Human-readable game catalog scraped from the casino frontend.
-    *   `processed/games_catalog.csv`: Structured CSV data used to populate the Vertex AI Search Data Store.
+    *   `raw/games.md`: Human-readable game catalog scraped from the casino frontend (includes direct URLs).
+    *   `processed/games_catalog.csv`: Structured CSV data used to populate the Vertex AI Search Data Store (includes the `url` column).
 *   **`scripts/`**: Contains utility scripts (e.g., `parse_games_to_csv.py`) used for data extraction and transformation.
 
 ## 2. CX Agent Studio Best Practices

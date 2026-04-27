@@ -1,25 +1,25 @@
-id,title,game_type,theme,short_description,detailed_description,symbols
-sugar-spin,Sugar Spin,Roulette,Sweets,Spin the sweet wheel!,Cute avatar characters are gathered around a massive roulette wheel made of sweets and lollipops,
-candy-crushers,Candy Crushers,Slots,Sweets,Match candy symbols!,Cute avatar characters are playing colorful slot machines made of sweets and frosting,"colorful swirl lollipop, frosted pink cupcake with sprinkles, glossy wrapped candy, glazed chocolate donut"
-sweet-line,Sweet Line,Bingo,Sweets,Play sweet bingo!,Cute avatar characters are sitting at tables playing bingo with gummy bear markers,
-pharaohs-wheel,Pharaoh's Wheel,Roulette,Egypt,Spin the ancient wheel!,Adventurer avatar characters are gathered around a stone and gold roulette wheel,
-tomb-of-treasures,Tomb of Treasures,Slots,Egypt,Match pharaoh motifs!,Adventurer avatar characters are playing ornate slot machines adorned with pharaoh motifs,"Egyptian pharaoh mask, Egyptian pyramid, the Eye of Horus, Egyptian scarab beetle"
-scarab-sweep,Scarab Sweep,Bingo,Egypt,Play scarab bingo!,Adventurer avatar characters are sitting at stone tables playing bingo with scarab markers,
-cosmic-spin,Cosmic Spin,Roulette,Space,Spin the neon wheel!,Astronaut avatar characters gathered around a futuristic neon roulette wheel,
-galactic-jackpots,Galactic Jackpots,Slots,Space,Match holograms!,Astronaut avatar characters playing holographic slot machines,"glowing rocket ship, green alien head, ringed planet, glowing comet"
-nebula-numbers,Nebula Numbers,Bingo,Space,Play glowing bingo!,Astronaut avatar characters playing bingo with glowing orbs,
-saloon-spin,Saloon Spin,Roulette,West,Spin the wagon wheel!,Cowboy avatar characters gathered around a wooden wagon wheel roulette,
-wild-west-wins,Wild West Wins,Slots,West,Match saloon symbols!,Cowboy avatar characters playing vintage slot machines,"cowboy hat, green cactus, golden horseshoe, silver sheriff star badge"
-cowboy-cards,Cowboy Cards,Bingo,West,Play wanted bingo!,Cowboy avatar characters playing bingo with bullets,
-deep-sea-spin,Deep Sea Spin,Roulette,Ocean,Spin the shell wheel!,Mermaid and diver avatar characters gathered around a seashell roulette wheel,
-coral-cash,Coral Cash,Slots,Ocean,Match coral reefs!,Mermaid and diver avatar characters playing coral slot machines,"great white shark, purple octopus, pink seashell, golden trident"
-pearl-pop,Pearl Pop,Bingo,Ocean,Play pearl bingo!,Mermaid and diver avatar characters playing bingo with pearls,
-aztec-wheel,Aztec Wheel,Roulette,Jungle,Spin the stone wheel!,Explorer avatar characters gathered around a stone calendar roulette wheel,
-temple-treasures,Temple Treasures,Slots,Jungle,Match stone idols!,Explorer avatar characters playing stone idol slot machines,"brown monkey, green snake, Aztec stone idol, tropical palm tree"
-jungle-jackpot,Jungle Jackpot,Bingo,Jungle,Play carved bingo!,Explorer avatar characters playing bingo with carved stones,
-blood-moon-spin,Blood Moon Spin,Roulette,Vampire,Spin the red wheel!,Vampire avatar characters gathered around a blood-red roulette wheel,
-draculas-fortune,Dracula's Fortune,Slots,Vampire,Match coffin symbols!,Vampire avatar characters playing coffin slot machines,"black bat, pale vampire with fangs, vial of red blood, glass of red wine"
-nightfall-numbers,Nightfall Numbers,Bingo,Vampire,Play blood bingo!,Vampire avatar characters playing bingo with blood drops,
-shuriken-spin,Shuriken Spin,Roulette,Ninja,Spin the shuriken!,Ninja avatar characters gathered around a shuriken roulette wheel,
-shadow-slots,Shadow Slots,Slots,Ninja,Match pagodas!,Ninja avatar characters playing pagoda slot machines,"black ninja mask, sharp katana sword, pink cherry blossom flower, Japanese castle"
-dojo-daubers,Dojo Daubers,Bingo,Ninja,Play scroll bingo!,Ninja avatar characters playing bingo with cherry blossoms,
+id,title,game_type,theme,short_description,detailed_description,symbols,url
+sugar-spin,Sugar Spin,Roulette,Sweets,Spin the sweet wheel!,Cute avatar characters are gathered around a massive roulette wheel made of sweets and lollipops,,https://casino.oliviervg.com/game/sugar-spin
+candy-crushers,Candy Crushers,Slots,Sweets,Match candy symbols!,Cute avatar characters are playing colorful slot machines made of sweets and frosting,"colorful swirl lollipop, frosted pink cupcake with sprinkles, glossy wrapped candy, glazed chocolate donut",https://casino.oliviervg.com/game/candy-crushers
+sweet-line,Sweet Line,Bingo,Sweets,Play sweet bingo!,Cute avatar characters are sitting at tables playing bingo with gummy bear markers,,https://casino.oliviervg.com/game/sweet-line
+pharaohs-wheel,Pharaoh's Wheel,Roulette,Egypt,Spin the ancient wheel!,Adventurer avatar characters are gathered around a stone and gold roulette wheel,,https://casino.oliviervg.com/game/pharaohs-wheel
+tomb-of-treasures,Tomb of Treasures,Slots,Egypt,Match pharaoh motifs!,Adventurer avatar characters are playing ornate slot machines adorned with pharaoh motifs,"Egyptian pharaoh mask, Egyptian pyramid, the Eye of Horus, Egyptian scarab beetle",https://casino.oliviervg.com/game/tomb-of-treasures
+scarab-sweep,Scarab Sweep,Bingo,Egypt,Play scarab bingo!,Adventurer avatar characters are sitting at stone tables playing bingo with scarab markers,,https://casino.oliviervg.com/game/scarab-sweep
+cosmic-spin,Cosmic Spin,Roulette,Space,Spin the neon wheel!,Astronaut avatar characters gathered around a futuristic neon roulette wheel,,https://casino.oliviervg.com/game/cosmic-spin
+galactic-jackpots,Galactic Jackpots,Slots,Space,Match holograms!,Astronaut avatar characters playing holographic slot machines,"glowing rocket ship, green alien head, ringed planet, glowing comet",https://casino.oliviervg.com/game/galactic-jackpots
+nebula-numbers,Nebula Numbers,Bingo,Space,Play glowing bingo!,Astronaut avatar characters playing bingo with glowing orbs,,https://casino.oliviervg.com/game/nebula-numbers
+saloon-spin,Saloon Spin,Roulette,West,Spin the wagon wheel!,Cowboy avatar characters gathered around a wooden wagon wheel roulette,,https://casino.oliviervg.com/game/saloon-spin
+wild-west-wins,Wild West Wins,Slots,West,Match saloon symbols!,Cowboy avatar characters playing vintage slot machines,"cowboy hat, green cactus, golden horseshoe, silver sheriff star badge",https://casino.oliviervg.com/game/wild-west-wins
+cowboy-cards,Cowboy Cards,Bingo,West,Play wanted bingo!,Cowboy avatar characters playing bingo with bullets,,https://casino.oliviervg.com/game/cowboy-cards
+deep-sea-spin,Deep Sea Spin,Roulette,Ocean,Spin the shell wheel!,Mermaid and diver avatar characters gathered around a seashell roulette wheel,,https://casino.oliviervg.com/game/deep-sea-spin
+coral-cash,Coral Cash,Slots,Ocean,Match coral reefs!,Mermaid and diver avatar characters playing coral slot machines,"great white shark, purple octopus, pink seashell, golden trident",https://casino.oliviervg.com/game/coral-cash
+pearl-pop,Pearl Pop,Bingo,Ocean,Play pearl bingo!,Mermaid and diver avatar characters playing bingo with pearls,,https://casino.oliviervg.com/game/pearl-pop
+aztec-wheel,Aztec Wheel,Roulette,Jungle,Spin the stone wheel!,Explorer avatar characters gathered around a stone calendar roulette wheel,,https://casino.oliviervg.com/game/aztec-wheel
+temple-treasures,Temple Treasures,Slots,Jungle,Match stone idols!,Explorer avatar characters playing stone idol slot machines,"brown monkey, green snake, Aztec stone idol, tropical palm tree",https://casino.oliviervg.com/game/temple-treasures
+jungle-jackpot,Jungle Jackpot,Bingo,Jungle,Play carved bingo!,Explorer avatar characters playing bingo with carved stones,,https://casino.oliviervg.com/game/jungle-jackpot
+blood-moon-spin,Blood Moon Spin,Roulette,Vampire,Spin the red wheel!,Vampire avatar characters gathered around a blood-red roulette wheel,,https://casino.oliviervg.com/game/blood-moon-spin
+draculas-fortune,Dracula's Fortune,Slots,Vampire,Match coffin symbols!,Vampire avatar characters playing coffin slot machines,"black bat, pale vampire with fangs, vial of red blood, glass of red wine",https://casino.oliviervg.com/game/draculas-fortune
+nightfall-numbers,Nightfall Numbers,Bingo,Vampire,Play blood bingo!,Vampire avatar characters playing bingo with blood drops,,https://casino.oliviervg.com/game/nightfall-numbers
+shuriken-spin,Shuriken Spin,Roulette,Ninja,Spin the shuriken!,Ninja avatar characters gathered around a shuriken roulette wheel,,https://casino.oliviervg.com/game/shuriken-spin
+shadow-slots,Shadow Slots,Slots,Ninja,Match pagodas!,Ninja avatar characters playing pagoda slot machines,"black ninja mask, sharp katana sword, pink cherry blossom flower, Japanese castle",https://casino.oliviervg.com/game/shadow-slots
+dojo-daubers,Dojo Daubers,Bingo,Ninja,Play scroll bingo!,Ninja avatar characters playing bingo with cherry blossoms,,https://casino.oliviervg.com/game/dojo-daubers

@@ -1,0 +1,34 @@
+[
+  {
+    "name": "id",
+    "type": "STRING"
+  },
+  {
+    "name": "title",
+    "type": "STRING"
+  },
+  {
+    "name": "game_type",
+    "type": "STRING"
+  },
+  {
+    "name": "theme",
+    "type": "STRING"
+  },
+  {
+    "name": "short_description",
+    "type": "STRING"
+  },
+  {
+    "name": "detailed_description",
+    "type": "STRING"
+  },
+  {
+    "name": "symbols",
+    "type": "STRING"
+  },
+  {
+    "name": "url",
+    "type": "STRING"
+  }
+]

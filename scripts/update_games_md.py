@@ -23,10 +23,12 @@ out.append("---\n\n## Themes & Variations\n")
 for theme, theme_games in themes.items():
     out.append(f"### Theme: {theme.capitalize()}")
     for g in theme_games:
-        sym_text = f" Symbols include {g['symbols']}." if g['symbols'] else ""
-        out.append(f"*   **{g['title']}** ({g['game_type']}): {g['detailed_description']}.{sym_text} *({g['short_description']})*")
+        sym_text = f" Symbols include {g['symbols']}." if g.get(
+            'symbols') else ""
+        link_text = f" [Play Now]({g['url']})" if g.get('url') else ""
+        out.append(
+            f"*   **{g['title']}** ({g['game_type']}): {g['detailed_description']}.{sym_text} *({g['short_description']})*{link_text}")
     out.append("\n")
 
 with open('/home/admin_/ces/data/raw/games.md', 'w', encoding='utf-8') as f:
     f.write('\n'.join(out))
-

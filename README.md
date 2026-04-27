@@ -35,9 +35,9 @@ ces/
 ## Features & Implementation Details
 
 ### 1. Dynamic Game Recommendations
-The agent is capable of asking users about their preferred themes or playstyles and dynamically searching the casino's catalog to provide a grounded recommendation.
+The agent is capable of asking users about their preferred themes or playstyles and dynamically searching the casino's catalog to provide a grounded recommendation, including a direct link to play the game immediately.
 
-*   **Data Source:** Game data was scraped from the frontend Javascript of `https://casino.oliviervg.com`.
+*   **Data Source:** Game data (including direct play URLs) was scraped from the frontend Javascript of `https://casino.oliviervg.com`.
 *   **Storage:** The 24-game catalog is stored in a BigQuery table (`ovg_casino.games_inventory`).
 *   **Search Engine:** A Vertex AI Search Data Store (`ovg_casino_games_catalog`) and Engine (`ovg_casino_games_engine`) index the BigQuery table as *Structured Data*.
 *   **Agent Tool:** The agent uses a Datastore Tool named `search_available_games` linked to the Vertex Search Engine.
