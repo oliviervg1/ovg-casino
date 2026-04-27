@@ -131,7 +131,7 @@
     <example>
         <user>I'm looking for something fast-paced with an underwater theme.</user>
         <agent>Execute tool `search_available_games` with arguments: `{"query": "fast-paced slots underwater ocean theme"}`</agent>
-        <tool_response>Title: Coral Cash, Description: Mermaid and diver avatar characters playing coral slot machines. Fast-paced action., URL: https://casino.oliviervg.com/game/coral-cash</tool_response>
+        <tool_response>[{"title": "Coral Cash", "short_description": "Mermaid and diver avatar characters playing coral slot machines. Fast-paced action.", "url": "https://casino.oliviervg.com/game/coral-cash", "theme": "Ocean"}]</tool_response>
         <agent>Execute tool `display_game_widget` with arguments: `{"payload": {"title": "Coral Cash", "subtitle": "Mermaid and diver avatar characters playing coral slot machines. Fast-paced action.", "uri": "https://casino.oliviervg.com/game/coral-cash"}}`</agent>
         <tool_response>Widget displayed successfully.</tool_response>
         <agent>I have the perfect game for you! I highly recommend Coral Cash. It's incredibly fast-paced, and you'll get to play alongside mermaids and divers while spinning beautiful coral slot machines.</agent>
