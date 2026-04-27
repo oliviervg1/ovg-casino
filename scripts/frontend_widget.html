@@ -81,6 +81,16 @@ window.addEventListener('ces-messenger-loaded', () => {
 
   const compiledTemplate = Handlebars.compile(templateString);
   cesMessenger.registerTemplate('game_carousel', compiledTemplate);
+
+  // Pass the user's first name from Firebase to the agent
+  if (typeof firebase !== 'undefined' && firebase.auth) {
+    firebase.auth().onAuthStateChanged((user) => {
+      if (user && user.displayName) {
+        const firstName = user.displayName.split(' ')[0];
+        cesMessenger.setQueryParameters({ user_first_name: firstName });
+      }
+    });
+  }
 });
 
 // Listen for the agent actively ending the session
