@@ -82,4 +82,19 @@ window.addEventListener('ces-messenger-loaded', () => {
   const compiledTemplate = Handlebars.compile(templateString);
   cesMessenger.registerTemplate('game_carousel', compiledTemplate);
 });
+
+// Listen for the agent actively ending the session
+window.addEventListener('ces-end-session', (event) => {
+  const cesm = document.querySelector('ces-messenger');
+  console.log("Agent ended the session:", event.detail.endSession);
+  
+  // Close the chat window visually
+  cesm.close();
+  
+  // Force disconnect the websocket
+  cesm.disconnectWebStream('AGENT_REQUESTED');
+  
+  // Clear the local chat history so the next open is fresh
+  cesm.clearStorage();
+});
 </script>
