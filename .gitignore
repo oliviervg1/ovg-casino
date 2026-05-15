@@ -46,6 +46,15 @@ Thumbs.db
 # Uncomment the line below if you want to ignore generated data files
 # data/processed/*.csv
 
+# Per-user Claude Code / Gemini CLI permission files (.local.json variants)
+.claude/settings.local.json
+.gemini/settings.local.json
+
+# cxas-agent-foundry's optional pointer file for multi-project workspaces.
+# We're a single project (gecx-config.json lives at repo root) and don't
+# use this; gitignored so a stray creation by `setup.sh` doesn't litter.
+.active-project
+
 # `cxas pull` mirrors prod evals into cxas_app/Casino_Concierge/evaluations/
 # as JSON-per-conversation. The repo's source of truth is evals/goldens/*.yaml
 # (pushed via `cxas push-eval`); committing the pulled JSON would duplicate

@@ -8,6 +8,9 @@
 
 app_dir: cxas_app/Casino_Concierge
 
+# Path to the evals directory (default; stated explicitly to lock the contract).
+evals_dir: evals/
+
 rules:
   # Python-tool-specific rules. Our tools are dataStoreTool and clientFunction,
   # neither of which has Python code. Re-enable these (remove from this file)
@@ -35,3 +38,11 @@ rules:
   # phrasings that satisfy the rule without losing clarity. Until then,
   # downgraded to info so the warning stays visible.
   I004: info  # negative-triggers
+
+# Run `cxas lint --list-rules` to see all available rules and their default
+# severities. The full catalog is intentionally NOT mirrored here (decay risk).
+
+# Files the linter should not scan.
+ignore:
+  - "**/__pycache__/**"
+  - "**/test_*.py"

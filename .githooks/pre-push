@@ -10,13 +10,13 @@ set -uo pipefail
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 cd "$REPO_ROOT"
 
-if [ ! -f venv/bin/activate ]; then
-  echo "pre-push: no venv/ found — run 'python3 -m venv venv && pip install cxas-scrapi' (see README)." >&2
+if [ ! -f .venv/bin/activate ]; then
+  echo "pre-push: no .venv/ found — run 'python3 -m venv .venv && source .venv/bin/activate && pip install cxas-scrapi' (see AGENTS.md)." >&2
   exit 1
 fi
 
 # shellcheck disable=SC1091
-source venv/bin/activate
+source .venv/bin/activate
 
 if ! command -v cxas >/dev/null 2>&1; then
   echo "pre-push: cxas not on PATH after venv activation. Run 'pip install cxas-scrapi'." >&2
