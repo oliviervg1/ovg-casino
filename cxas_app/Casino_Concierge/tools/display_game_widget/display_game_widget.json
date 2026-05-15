@@ -1,0 +1,47 @@
+{
+  "name": "069d9786-7296-4f58-9f08-01d3ed4255e0",
+  "clientFunction": {
+    "name": "display_game_widget",
+    "description": "Invoke a client-side function to render a Handlebars template in the chat widget containing a list of games for the user to select from.",
+    "parameters": {
+      "type": "OBJECT",
+      "properties": {
+        "context": {
+          "type": "OBJECT",
+          "properties": {
+            "games": {
+              "type": "ARRAY",
+              "description": "Required. A list of games to display in the carousel.",
+              "items": {
+                "type": "OBJECT",
+                "properties": {
+                  "subtitle": {
+                    "type": "STRING",
+                    "description": "Required. A short, engaging description or tagline of the game."
+                  },
+                  "title": {
+                    "type": "STRING",
+                    "description": "Required. The name of the game."
+                  },
+                  "uri": {
+                    "type": "STRING",
+                    "description": "Required. The direct link (URL) to play the game."
+                  }
+                },
+                "required": ["title", "subtitle", "uri"]
+              }
+            }
+          },
+          "required": ["games"],
+          "description": "Required. The context object containing the data to render the template."
+        },
+        "template_id": {
+          "type": "STRING",
+          "description": "Required. The ID of the template to render. ALWAYS set this to \"game_carousel\"."
+        }
+      },
+      "required": ["template_id", "context"]
+    }
+  },
+  "displayName": "display_game_widget"
+}

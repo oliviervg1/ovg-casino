@@ -1,0 +1,35 @@
+{
+  "name": "91a9f48f-c8ef-4e3c-8ef3-c56663da52c1",
+  "dataStoreTool": {
+    "name": "search_available_games",
+    "description": "Search for available casino games based on user preferences, such as theme (e.g., Space, Sweets, Egypt, Ocean, Jungle, Ninja, Vampire, West) or game type (e.g., Slots, Roulette, Bingo).",
+    "engineSource": {
+      "engine": "$env_var",
+      "dataStoreSources": [{
+        "dataStore": {
+          "name": "$env_var",
+          "engineType": "SEARCH_ENGINE"
+        }
+      }]
+    },
+    "modalityConfigs": [{
+      "modalityType": "TEXT",
+      "rewriterConfig": {
+        "modelSettings": {
+        }
+      },
+      "summarizationConfig": {
+        "modelSettings": {
+        },
+        "prompt": "Based on the user\u0027s $query, search the $sources for matching casino games. You are currently in this $conversation. YOU MUST output the raw JSON array of the matching games. Each object MUST include `title`, `short_description`, `url`, and `theme`. Do not add markdown or pleasantries, just the JSON string array. Example: [{\"title\": \"Coral Cash\", \"short_description\": \"Play coral slots!\", \"url\": \"https://casino.oliviervg.com/game/coral-cash\", \"theme\": \"Ocean\"}]"
+      },
+      "groundingConfig": {
+        "groundingLevel": 3.0
+      }
+    }, {
+      "modalityType": "AUDIO"
+    }]
+  },
+  "executionType": "SYNCHRONOUS",
+  "displayName": "search_available_games"
+}

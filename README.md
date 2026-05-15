@@ -13,22 +13,70 @@ The Casino Concierge is designed to act as a highly knowledgeable, vibrant, and 
 
 ## Project Structure
 ```text
-ces/
-├── README.md                  # Project overview, architecture, and setup instructions
-├── prompts/                   
-│   └── system_instructions.md # The core XML-based prompt instructions that govern the agent's persona, constraints, taskflows, and few-shot examples.
-├── data/                      
-│   ├── raw/                   
-│   │   └── games.md           # A detailed, human-readable catalog of all 24 unique games (3 game types x 8 themes) offered by OVG Casino, parsed from the casino's frontend codebase.
-│   └── processed/             
-│       └── games_catalog.csv  # The structured data representation of games.md, formatted for ingestion into BigQuery and Vertex AI Search.
-├── scripts/                   
-│   └── (Optional) Scripts used to fetch/parse the website data or deploy the datastore.
-├── tools/                     
-│   └── schemas/               # (For future use) OpenAPI JSON/YAML schemas for new tools.
-├── .env                       # Environment variables (e.g., Google Cloud Project IDs)
-└── venv/                      # Python virtual environment
+ovg-casino-concierge/
+├── README.md                       # Project overview, architecture, and setup instructions
+├── CLAUDE.md                       # Working instructions for Claude Code (and any other coding agent)
+├── cxas_app/                       # Source of truth for the CES agent (cxas-scrapi layout)
+│   └── Casino_Concierge/
+│       ├── app.json                # App config: voice, locales, model, guardrails, logging
+│       ├── environment.json        # Per-env values resolved into tool $env_var placeholders
+│       ├── agents/Casino_Concierge/
+│       │   ├── Casino_Concierge.json   # Agent metadata
+│       │   └── instruction.txt         # XML-tagged system prompt (canonical)
+│       ├── tools/
+│       │   ├── search_available_games/ # Datastore tool → Vertex AI Search
+│       │   └── display_game_widget/    # Client function tool → Handlebars carousel
+│       ├── guardrails/                 # Native CES guardrails (Prompt + Safety)
+│       └── evaluations/                # Native CES evaluations (eval suite expanded in Phase C)
+├── data/
+│   ├── raw/games.md                # Human-readable catalog of all 24 games
+│   └── processed/games_catalog.csv # Structured catalog for BigQuery / Vertex AI Search
+├── scripts/
+│   ├── parse_games_to_csv.py       # Scrapes casino frontend bundle → games_catalog.csv
+│   ├── update_games_md.py          # Regenerates games.md from the CSV
+│   └── frontend_widget.html        # Embedded snippet for casino.oliviervg.com (Handlebars carousel)
+├── docs/superpowers/               # Specs and implementation plans (cxas retrofit roadmap)
+├── schema.json                     # BigQuery schema for games_inventory
+├── .env                            # Google Cloud env vars (gitignored)
+└── venv/                           # Python virtual environment (gitignored)
 ```
+
+## Local development
+
+Prerequisites:
+- Python 3.10+ (this repo is verified on 3.12).
+- `gcloud` CLI authenticated against the `bigquery-demo-396708` project: `gcloud auth login` and `gcloud auth application-default login`.
+
+Setup:
+
+```bash
+git clone <repo-url>
+cd ovg-casino-concierge
+python3 -m venv venv && source venv/bin/activate
+pip install --upgrade pip
+pip install cxas-scrapi
+```
+
+Pull the latest agent state from CES (overwrites `cxas_app/`):
+
+```bash
+cxas pull \
+  projects/bigquery-demo-396708/locations/us/apps/c4242f9c-3b93-4c92-a69c-a035daabc0c8 \
+  --target-dir cxas_app/
+```
+
+Push your edits back:
+
+```bash
+cxas push \
+  --app-dir cxas_app/Casino_Concierge \
+  --to projects/bigquery-demo-396708/locations/us/apps/c4242f9c-3b93-4c92-a69c-a035daabc0c8 \
+  --env-file cxas_app/Casino_Concierge/environment.json \
+  --project-id bigquery-demo-396708 \
+  --location us
+```
+
+For the full deploy loop (verify → push → smoke test), see the **Deployment workflow** section in `CLAUDE.md`.
 
 ---
 
