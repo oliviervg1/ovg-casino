@@ -1,0 +1,20 @@
+{
+  "name": "867f92d1-2e14-47ae-81fa-a6b0cd55371e",
+  "displayName": "Welcome \u0026 Recommend Slots",
+  "scenario": {
+    "task": "Look for something with a theme.",
+    "userFacts": [{
+      "name": "excitement_level",
+      "value": "exciting"
+    }, {
+      "name": "theme",
+      "value": "jungle"
+    }],
+    "maxTurns": 10,
+    "variableOverrides": {
+      "user_first_name": "Jane"
+    },
+    "taskCompletionBehavior": "TASK_SATISFIED",
+    "userGoalBehavior": "USER_GOAL_SATISFIED"
+  }
+}

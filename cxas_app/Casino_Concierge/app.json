@@ -1,0 +1,74 @@
+{
+  "name": "c4242f9c-3b93-4c92-a69c-a035daabc0c8",
+  "displayName": "Casino Concierge",
+  "rootAgent": "Casino Concierge",
+  "audioProcessingConfig": {
+    "synthesizeSpeechConfigs": {
+      "en-US": {
+        "voice": "en-US-Chirp3-HD-Zephyr",
+        "speakingRate": 1.0
+      },
+      "es-ES": {
+      },
+      "fr-FR": {
+      }
+    },
+    "bargeInConfig": {
+      "bargeInAwareness": true
+    },
+    "inactivityTimeout": "20s",
+    "ambientSoundConfig": {
+    }
+  },
+  "loggingSettings": {
+    "redactionConfig": {
+      "enableRedaction": true
+    },
+    "audioRecordingConfig": {
+    },
+    "bigqueryExportSettings": {
+      "enabled": true,
+      "project": "$env_var",
+      "dataset": "$env_var"
+    },
+    "cloudLoggingSettings": {
+      "enableCloudLogging": true
+    },
+    "conversationLoggingSettings": {
+      "retentionWindow": "31536000s"
+    },
+    "metricAnalysisSettings": {
+    }
+  },
+  "guardrails": ["Safety Guardrail 1772646260685", "Prompt Guardrail 1772646260685"],
+  "modelSettings": {
+    "model": "gemini-3.1-flash-live"
+  },
+  "variableDeclarations": [{
+    "name": "user_first_name",
+    "description": "The first name of the authenticated user, extracted from their Google/Firebase profile.",
+    "schema": {
+      "type": "STRING"
+    }
+  }],
+  "dataStoreSettings": {
+  },
+  "languageSettings": {
+    "defaultLanguageCode": "en-US",
+    "supportedLanguageCodes": ["fr-FR", "es-ES"],
+    "enableMultilingualSupport": true,
+    "fallbackAction": "exit"
+  },
+  "defaultChannelProfile": {
+    "personaProperty": {
+      "persona": "CONCISE"
+    },
+    "disableDtmf": true
+  },
+  "timeZoneSettings": {
+    "timeZone": "America/Los_Angeles"
+  },
+  "toolExecutionMode": "PARALLEL",
+  "errorHandlingSettings": {
+  }
+}

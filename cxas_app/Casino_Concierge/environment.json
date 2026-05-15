@@ -1,0 +1,24 @@
+{
+  "app": {
+    "loggingSettings": {
+      "bigqueryExportSettings": {
+        "project": "bigquery-demo-396708",
+        "dataset": "gecx_logs"
+      }
+    }
+  },
+  "tools": {
+    "search_available_games": {
+      "dataStoreTool": {
+        "engineSource": {
+          "engine": "projects/620047628872/locations/global/collections/default_collection/engines/ovg_casino_games_engine",
+          "dataStoreSources": [{
+            "dataStore": {
+              "name": "projects/620047628872/locations/global/collections/default_collection/dataStores/ovg_casino_games_catalog"
+            }
+          }]
+        }
+      }
+    }
+  }
+}
