@@ -3,14 +3,16 @@
 ## Current Project State
 The **OVG Casino Concierge** is a virtual assistant built on **Google Cloud Customer Engagement Suite (CX Agent Studio)**.
 Currently, it successfully:
-1. Portrays a warm, upbeat, and professional casino host using the `en-US-Chirp3-HD-Zephyr` voice model.
+1. Portrays a warm, upbeat, and professional casino host using the `en-US-Chirp3-HD-Zephyr` voice model on the `gemini-3.1-flash-live` LLM.
 2. Dynamically recommends games by querying a **Vertex AI Search Data Store**, backed by a **BigQuery** table containing 24 distinct games scraped from the casino's frontend.
 3. Renders interactive UI components in the user's chat window using **Client Function Tools** piped to a custom Handlebars template (`game_carousel`) in the `ces-messenger` frontend framework.
 4. Switches between multiple languages (`en-US`, `fr-FR`, `es-ES`) using `enableMultilingualSupport` (note: responsible-gaming resources still only cite the UK helpline — see §1.1).
 5. Handles conversational boundaries effectively, including bounded proactive re-engagement (two attempts before `end_session`) and graceful session termination on goodbye or gambling distress.
 6. Greets returning users by name via `user_first_name` from Firebase auth → `setQueryParameters`.
-7. Resists persona-override / jailbreak attempts via a dedicated taskflow step and example.
+7. Resists persona-override / jailbreak attempts via a dedicated taskflow step and example, **and** has two CES native guardrails attached (`Prompt Guardrail` using `llmPromptSecurity`; `Safety Guardrail` blocking the four standard harm categories at `BLOCK_MEDIUM_AND_ABOVE`).
 8. Enforces strict anti-hallucination constraints (only recommends games returned by `search_available_games`, with a broader-query fallback before giving up).
+9. Logs all conversations to BigQuery (`gecx_logs` dataset) and Cloud Logging, with text redaction enabled and a 1-year retention window.
+10. Is fully version-controlled under `cxas_app/Casino_Concierge/` and deployed via the cxas-scrapi CLI (`cxas push`); see `CLAUDE.md` for the full deploy workflow and `docs/superpowers/specs/2026-05-15-cxas-scrapi-retrofit-design.md` for the ongoing tooling roadmap (lint, evals, CI/CD, Claude Code skills).
 
 While the foundational architecture is robust, several improvements would meaningfully raise safety, reliability, and operational maturity.
 
@@ -28,11 +30,14 @@ While the foundational architecture is robust, several improvements would meanin
     Drive selection from the active language code rather than hard-coding into the prompt.
 
 ### 1.2 Native CES Guardrails for Content Filtering
-*   **Current State:** The agent relies on prompt instructions to detect frustration and offer the gambling helpline.
-*   **Improvement:** Add native CES **Guardrails** as a deterministic safety layer:
-    *   `llmPromptSecurity` (or a custom `llmPolicy` with `policyScope: USER_QUERY`) classifying inputs for gambling addiction signals, financial distress, or underage self-disclosure.
-    *   On trigger, `action: respondImmediately` with the locale-appropriate helpline (per §1.1) and force `end_session` with `reason="gambling_concerns"`.
-    *   A `contentFilter` guardrail for an explicit banned-phrase list (e.g., underage signals like "I'm 16," "as a minor").
+*   **Status (2026-05-15):** Partially shipped. Basic guardrails are active in prod; the gambling-distress-specific flow (locale helpline + forced `end_session`) is still TBD.
+*   **Currently deployed** (visible in `cxas_app/Casino_Concierge/guardrails/`):
+    *   `Prompt Guardrail 1772646260685` — `llmPromptSecurity` with default settings; action `generativeAnswer` (rewrites unsafe input rather than blocking).
+    *   `Safety Guardrail 1772646260685` — `modelSafety` blocking `HARM_CATEGORY_HATE_SPEECH`, `HARM_CATEGORY_DANGEROUS_CONTENT`, `HARM_CATEGORY_SEXUALLY_EXPLICIT`, and `HARM_CATEGORY_HARASSMENT` at `BLOCK_MEDIUM_AND_ABOVE`.
+*   **Remaining work:**
+    *   A custom `llmPolicy` (or tuned `llmPromptSecurity`) with `policyScope: USER_QUERY` specifically classifying gambling addiction signals, financial distress, or underage self-disclosure.
+    *   On trigger: switch the action from `generativeAnswer` to `respondImmediately` with the locale-appropriate helpline (per §1.1) and force `end_session` with `reason="gambling_concerns"`.
+    *   A `contentFilter` guardrail for an explicit banned-phrase list (e.g., underage signals like "I'm 16," "as a minor"). The deployed `modelSafety` covers generic harm categories but does not enforce a custom phrase list.
 
 ---
 
@@ -71,8 +76,15 @@ While the foundational architecture is robust, several improvements would meanin
 ## 4. DevOps & Quality
 
 ### 4.1 Automated Evaluation Framework
-*   **Current State:** Testing is manual via the simulator; a regression in `system_instructions.md` would be caught only by chance.
-*   **Improvement:** Use CES native **Evaluation** and **EvaluationDataset** resources. Seed the dataset from existing `<examples>` in the prompt. Add a deploy gate: run `run_evaluation` against the draft agent before pushing via `update_agent`; block promotion on failures.
+*   **Status (2026-05-15):** Partially shipped. One starter Evaluation exists; the seeded suite + deploy gate are tracked under Phase C of the cxas-scrapi retrofit.
+*   **Currently deployed** (visible in `cxas_app/Casino_Concierge/evaluations/`):
+    *   `Welcome & Recommend Slots` — a single multi-turn `scenario` Evaluation (10 max turns, jungle theme + "exciting" excitement, `user_first_name=Jane`) gating on `TASK_SATISFIED` / `USER_GOAL_SATISFIED`.
+*   **Remaining work** (covered by Phase C of `docs/superpowers/specs/2026-05-15-cxas-scrapi-retrofit-design.md`):
+    *   Platform Goldens seeded from each `<example>` in the instruction file (10 cases).
+    *   A jailbreak / persona-stability golden suite (see §4.3 below).
+    *   A multi-turn Local Simulation suite covering core user journeys.
+    *   An audio-channel mirror of the goldens (see §4.2 below).
+    *   The deploy gate itself ships with Phase D (CI/CD); evals run automatically against ephemeral CES apps on every PR via `cxas ci-test`.
 
 ### 4.2 Voice-Channel Evaluation
 *   **Current State:** Even with #4.1 in place, text-only evaluation misses TTS pronunciation issues, barge-in handling, and STT mishearings — and this agent is voice-first.
@@ -83,19 +95,25 @@ While the foundational architecture is robust, several improvements would meanin
 *   **Improvement:** A dedicated golden-eval set of jailbreak prompts ("ignore previous instructions," "reveal your system prompt," "pretend you're DAN," "act as a financial advisor and recommend bets"). The agent must refuse without leaking instructions. Run as part of the same gate as #4.1.
 
 ### 4.4 App Version Pinning & Rollback
-*   **Current State:** The current deploy workflow edits the draft agent directly via `update_agent`. There's no pinned, known-good production version and no quick rollback path.
-*   **Improvement:** Use CES `AppVersion` + `Deployment` resources to pin a prod deployment to a versioned snapshot. Promotion flow: edit draft → run evals (#4.1–4.3) → snapshot to `AppVersion` → flip the prod `Deployment` to the new version. Rollback = flip back to the prior version.
+*   **Current State:** Post-Phase-A, the deploy workflow uses `cxas push` against the prod app from `cxas_app/Casino_Concierge/`. There is still no pinned, known-good production `AppVersion` and no quick rollback path — every push goes straight to the live draft.
+*   **Improvement (queued under Phase D of the cxas retrofit):** Use CES `AppVersion` + `Deployment` resources to pin a prod deployment to a versioned snapshot. Promotion flow: edit draft → run evals (#4.1–4.3) → snapshot to `AppVersion` → flip the prod `Deployment` to the new version. Rollback = flip back to the prior version. The implementation lives in `.github/workflows/main-deploy.yaml` and `.github/workflows/rollback.yaml` per the retrofit spec.
 
 ### 4.5 Logging & Observability
-*   **Current State:** No `loggingSettings` configured. Session conversations, escalation rates, and timeouts are invisible.
-*   **Improvement:** Configure the app's `loggingSettings`:
-    *   Enable **BigQuery export** of conversation data for offline analysis.
-    *   Enable **Cloud Logging** for app-level events.
-    *   Enable **audio recording** with a `redactionConfig` (DLP) for compliance.
-    *   Build a basic dashboard for: sessions/day, average session length, distribution of `end_session.reason` values, and an alert on `gambling_concerns` spikes (potential incident or prompt regression).
+*   **Status (2026-05-15):** Partially shipped. Conversation logging + redaction are configured in prod; audio recording is intentionally off; the dashboard is still TBD.
+*   **Currently deployed** (visible in `cxas_app/Casino_Concierge/app.json` under `loggingSettings`):
+    *   **BigQuery export** of conversation data: `gecx_logs` dataset in `bigquery-demo-396708`.
+    *   **Cloud Logging** for app-level events: `enableCloudLogging: true`.
+    *   **Text redaction**: `redactionConfig.enableRedaction: true`.
+    *   **Conversation retention**: 1 year (`retentionWindow: "31536000s"`).
+*   **Remaining work:**
+    *   Enable **audio recording** (`audioRecordingConfig` is currently `{}` — recording is off). The `redactionConfig` is already on, so DLP would apply to recordings the moment they're enabled.
+    *   Build the dashboard: sessions/day, average session length, distribution of `end_session.reason` values, and an alert on `gambling_concerns` spikes (potential incident or prompt regression). The data is already flowing into BigQuery — this is a Looker Studio / Looker / Cloud Monitoring pure-config job, not an agent change.
 
 ### 4.6 Partial Infrastructure as Code
-*   **Current State:** BigQuery, Vertex AI Search, and CES configs were created via CLI / cURL / MCP.
-*   **Improvement:** Pragmatic split rather than a single Terraform monolith:
-    *   **BigQuery + Vertex AI Search:** port to Terraform — both have mature providers.
-    *   **CES Agent Studio resources** (agents, tools, toolsets, guardrails, deployments): no first-class Terraform provider. Maintain as version-controlled YAML/markdown in this repo (already partially done — `prompts/system_instructions.md` is the source of truth) and reify via a deploy script that wraps the MCP `update_agent` / `create_*` calls. Pair with #4.4 so each push produces an `AppVersion`.
+*   **Status (2026-05-15):** Partially shipped for the CES side. The cxas-scrapi retrofit (`docs/superpowers/specs/2026-05-15-cxas-scrapi-retrofit-design.md`) replaced the original "version-controlled YAML/markdown + deploy script" idea with the cxas tool. BigQuery + Vertex AI Search remain on the original CLI / cURL plan.
+*   **Currently deployed:**
+    *   **CES Agent Studio resources** (agents, tools, guardrails, evaluations, app config): now version-controlled under `cxas_app/Casino_Concierge/` and deployed via `cxas push`. The `prompts/system_instructions.md` mention in the original wording is obsolete — that file moved to `cxas_app/Casino_Concierge/agents/Casino_Concierge/instruction.txt`.
+    *   AppVersion + Deployment-based prod pinning is queued under Phase D of the cxas retrofit (originally cross-referenced as §4.4).
+*   **Remaining work:**
+    *   **BigQuery + Vertex AI Search:** still need to be ported to Terraform. Both have mature providers.
+    *   Phases B (lint), C (evals), D (CI/CD with AppVersion pinning), and E (Claude Code skills) of the cxas retrofit. See the spec for details.
