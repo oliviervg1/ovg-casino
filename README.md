@@ -84,6 +84,45 @@ For the full deploy loop (verify → push → smoke test), see the **Deployment 
 
 ---
 
+## Evaluations
+
+Eval YAML lives at `evals/`:
+
+- `evals/goldens/happy_path.yaml` — 10 single-turn conversions of the prompt's example dialogue (P0, happy_path, audio_critical tags).
+- `evals/goldens/tool_usage.yaml` — 5 conversations asserting tool-call contracts (search → widget, end_session reasons).
+- `evals/goldens/jailbreak.yaml` — 18 conversations across 5 attack families (prompt_injection, roleplay_override, scope_creep, win_guarantee, underage). Threshold: 100% pass.
+- `evals/simulations/multi_turn.yaml` — 5 multi-turn LLM-driven scripted user journeys.
+
+Quick reference (run from repo root with the venv active):
+
+```bash
+PROD_APP=projects/bigquery-demo-396708/locations/us/apps/c4242f9c-3b93-4c92-a69c-a035daabc0c8
+
+# Push Goldens after editing (idempotent on display_name)
+cxas push-eval --app-name $PROD_APP --file evals/goldens/happy_path.yaml
+cxas push-eval --app-name $PROD_APP --file evals/goldens/tool_usage.yaml
+cxas push-eval --app-name $PROD_APP --file evals/goldens/jailbreak.yaml
+
+# Run a tagged Goldens subset against prod
+cxas run --app-name $PROD_APP --tags happy_path --wait
+cxas run --app-name $PROD_APP --tags tool_usage --wait
+cxas run --app-name $PROD_APP --tags jailbreak  --wait
+
+# Audio re-run of audio_critical conversations
+cxas run --app-name $PROD_APP --tags audio_critical --modality audio --wait
+
+# Local simulations + combined report
+mkdir -p /tmp/sim_report
+cxas evals report --app-name $PROD_APP --simulation-dir evals/simulations/ \
+                  --output-dir /tmp/sim_report --include sims --run
+```
+
+Caveat: as of cxas-scrapi 1.2.0, `cxas run` may print `FINAL RESULT: FAIL` while still returning exit code 0. Until that's fixed upstream, scrape stdout for `FINAL RESULT:` rather than relying on the exit code. See the `### Evals` sub-section in `CLAUDE.md` for the full schema gotchas (Goldens `# silent` marker, Simulations top-level-list shape, `--filter-auto-metrics` degenerate flag) and the rationale behind every choice.
+
+`scripts/delete_orphan_eval.sh` is a one-shot CES REST DELETE recipe kept for discoverability — `cxas push-eval` is upsert-only, so this is the path for cleaning up an eval resource that's no longer in the YAML.
+
+---
+
 ## Features & Implementation Details
 
 ### 1. Dynamic Game Recommendations & Rich Widgets

@@ -45,3 +45,10 @@ Thumbs.db
 # Project Specific
 # Uncomment the line below if you want to ignore generated data files
 # data/processed/*.csv
+
+# `cxas pull` mirrors prod evals into cxas_app/Casino_Concierge/evaluations/
+# as JSON-per-conversation. The repo's source of truth is evals/goldens/*.yaml
+# (pushed via `cxas push-eval`); committing the pulled JSON would duplicate
+# every Golden in two places and create push/pull drift. Ignored to keep
+# evals/goldens/ as the single source of truth. See "### Evals" in CLAUDE.md.
+cxas_app/Casino_Concierge/evaluations/

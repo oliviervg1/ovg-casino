@@ -79,6 +79,46 @@ The pre-push git hook in `.githooks/pre-push` enforces this on every `git push`;
 
 Re-enable any rule by removing its line from `cxaslint.yaml`. The hook uses cxas's exit code (non-zero = errors found), so any new rule violations introduced by an edit will block the push.
 
+### Evals
+
+Eval YAML lives at `evals/` (project root), with `evals/goldens/*.yaml` for Platform Goldens and `evals/simulations/*.yaml` for Simulations. The cxas-scrapi linter rules `E001`-`E011` only fire on files under those subdirectories.
+
+Schema gotchas the lint won't always catch:
+
+- **Goldens `agent:` field** must be a plain string or list-of-strings (rule `E007` enforces). To assert a tool fires without pinning the agent's text, set `agent: "# silent — <reason>"`. The runtime parser (`cxas_scrapi/utils/eval_utils.py:_process_dataset_turn`) skips the `agentResponse` expectation step whenever the agent string contains the substring `# silent`, so the eval doesn't false-fail on any text the agent actually produces. Without this marker, dropping `agent:` triggers `E008` and the runtime auto-FAILs the turn for "unexpected response".
+- **`$matchType`** is valid only inside `tool_calls[].args.<argname>`, never on the `agent:` field. Valid values: `ignore`, `semantic`, `contains`, `regexp` (rule `E011`).
+- **Per-conversation session-param overrides** use the field `session_parameters:` (Pydantic `Conversation.session_parameters`). The top-level `common_session_parameters:` is a different field and only valid at the document root (Pydantic `Conversations.common_session_parameters`).
+- **Simulations YAML is a top-level *list*** (no `evals:` wrapper, no `scenario:` sub-key). Each entry: `name:`, `tags:`, `steps:` (list of `{goal, success_criteria, response_guide, max_turns, static_utterance, inject_variables}`), optional `session_parameters:` and `expectations:`. Verified against `cxas_scrapi/utils/reporting.py:1597-1607` and `evals/simulations/multi_turn.yaml`'s in-file schema reference comment.
+
+Push Goldens to prod (idempotent on `display_name` — the `cxas push-eval` source proves this in `cxas_scrapi/cli/main.py:push_eval`):
+
+```
+cxas push-eval --app-name <PROD_APP> --file evals/goldens/<file>.yaml
+```
+
+Run a Goldens suite by tag against prod, gating strictly on the underlying eval status:
+
+```
+cxas run --app-name <PROD_APP> --tags <tag> --wait
+```
+
+Avoid `--filter-auto-metrics` for Phase C-style YAMLs. The flag turns off the auto-LLM-judge AND only checks top-level `expectations:` lists; we don't author those, so `--filter-auto-metrics` always reports PASS regardless of underlying outcomes (verified in `filter_metrics_and_assess` at `cli/main.py:175-266`). Bare `cxas run --wait` uses the auto-judge correctly. **Caveat:** as of cxas-scrapi 1.2.0 the `cxas run` command prints `FINAL RESULT: FAIL` but still returns exit code 0 in some configurations — until that's fixed upstream, scrape stdout for `FINAL RESULT:` instead of relying on the exit code (Phase D's CI gate will).
+
+Audio modality re-runs the same Goldens with TTS+STT round-trip. Tag relevant Goldens with `audio_critical` and run with `--modality audio --tags audio_critical`. Audio runs are slow (multiple seconds per turn) — only tag conversations where TTS-specific issues matter.
+
+Run local Simulations + combined report:
+
+```
+mkdir -p /tmp/sim_report
+cxas evals report --app-name <PROD_APP> --simulation-dir evals/simulations/ --output-dir /tmp/sim_report --include sims --run
+```
+
+`--run` actually runs the sims (without it, the command only builds a report from existing data). `--include sims` skips re-running goldens/scenarios. The simulator's user-LLM is non-deterministic and has two known limitations baked into our YAML design: (1) when the agent fires `end_session`, the simulator loop breaks BEFORE the user-LLM can observe the agent's final response, so any goal phrased as "agent ends the session" stays In Progress forever; (2) the simulator's transcript sometimes shows agent messages that look like an echo of the user's prior turn (text-extraction artifact). Workaround pattern (used in `evals/simulations/multi_turn.yaml`): keep step `success_criteria` framed as user-observable actions (something the user knows they said or did) and use `expectations:` for safety / behavioral assertions — those are post-hoc LLM-judged against the full `detailed_trace` (which DOES include the agent's tool calls and actual text), bypassing both bugs.
+
+`cxas push-eval` is **Goldens-only** (uses `update_evaluation`); Simulations stay local. `cxas push` is **upsert-only** for everything; deletions need direct CES API calls — see `scripts/delete_orphan_eval.sh` for the recipe (hostname is `ces.googleapis.com`, regardless of app location, per `cxas_scrapi/core/common.py:_get_client_options`).
+
+`cxas pull` mirrors prod evals into `cxas_app/Casino_Concierge/evaluations/` as JSON-per-conversation. That directory is in `.gitignore` because `evals/goldens/*.yaml` is the single source of truth — committing the pulled JSON would create two parallel copies of every Golden.
+
 ### MCP `update_agent` — deprecated
 
 The `mcp_customer-experience-agent-studio_update_agent` MCP tool was the previous deploy mechanism (pre-Phase A) and is technically still available. **Do not use it for new changes** — it bypasses the cxas source of truth and produces drift between local files and prod. Reserve it only as a worst-case rollback path if `cxas push` itself becomes unusable.
