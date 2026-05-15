@@ -1,0 +1,11 @@
+{
+  "gcp_project_id": "bigquery-demo-396708",
+  "location": "us",
+  "app_name": "Casino_Concierge",
+  "deployed_app_id": "c4242f9c-3b93-4c92-a69c-a035daabc0c8",
+  "app_dir": "cxas_app/",
+  "model": "gemini-3.1-flash-live",
+  "modality": "audio",
+  "default_channel": "audio",
+  "gcs_bucket": "gs://bigquery-demo-396708-cxas-audio-evals"
+}

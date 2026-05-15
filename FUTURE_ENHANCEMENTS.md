@@ -123,8 +123,18 @@ While the foundational architecture is robust, several improvements would meanin
     *   AppVersion + Deployment-based prod pinning is queued under Phase D of the cxas retrofit (originally cross-referenced as §4.4).
 *   **Remaining work:**
     *   **BigQuery + Vertex AI Search:** still need to be ported to Terraform. Both have mature providers.
-    *   Phases B (lint), C (evals), D (CI/CD with AppVersion pinning), and E (Claude Code skills) of the cxas retrofit. See the spec for details.
+    *   Phase D (CI/CD with AppVersion pinning) of the cxas retrofit. Phases B, C, and E have shipped. See the spec for details.
 
 ### 4.7 Prompt rewrite to avoid negative triggers (I004)
 *   **Status:** Deferred. The cxas lint rule `I004 negative-triggers` is downgraded to `info` in `cxaslint.yaml` because the no-results fallback and silence-detection triggers in `instruction.txt` legitimately depend on a negative condition.
 *   **Improvement:** A focused prompt-improvement pass to find phrasings that satisfy the rule without losing clarity (e.g., trigger on "the result list is empty" rather than "no results"). Then re-enable I004 at warning severity in `cxaslint.yaml`.
+
+### 4.8 Upstream cxas-scrapi: drift-detection hook is a deny-all gate (R1)
+*   **Status (2026-05-15, Phase E):** Discovered, mitigated locally, upstream fix pending. The `pre-agent-push.sh` hook ships in the bundle but is unwired in our `.claude/settings.json` and `.gemini/settings.json` (commit `e78fee8`); the script remains under `.agents/skills/cxas-agent-foundry/scripts/hooks/` because the bundle is frozen as-is. The other two hooks (`pre-agent-push-lint.sh`, `post-agent-update.sh`) remain wired.
+*   **The bug:** the hook's intent (per its header comment) is to "block the push if local files are stale (platform has changes not in local)" — a one-directional check. Its implementation is `cxas pull` to a temp dir followed by `diff -rq tmp_dir app_dir`, which is bidirectional. Any normal `cxas push` produces drift output (because the whole point of pushing is that local has changes the platform doesn't yet see), so the hook treats every legitimate push as drift and blocks. Functionally a deny-all gate.
+*   **Confirmation:** smoke-tested during Phase E. With one trivial blank-line edit to `instruction.txt` the hook returns `{"hookSpecificOutput":{"hookEventName":"PreToolUse","blockToolExecution":true,...}}`. See PR #6, design spec §9 R1, plan Task 9 for the verbatim output.
+*   **Improvement (upstream):** the drift detection should be one-directional. Two viable shapes:
+    *   **(a)** Compare against a stored hash of platform state from the last `cxas pull`. The hook records the hash at pull time; if the current platform state matches the stored hash, no drift (regardless of local changes). If it differs, someone made platform-side changes after our last pull → drift. Lower complexity, no timestamp dependency.
+    *   **(b)** Diff in only one direction: block only on files where the platform has a version that local doesn't, ignoring files where local has changes the platform doesn't. Slightly more involved (requires per-file content comparison rather than `diff -rq`'s flat output).
+*   **Action item:** file an issue at the cxas-scrapi upstream repo describing the bug and proposing fix (a). Once shipped (and after we re-run `cxas init` per the bundle-update procedure documented in `AGENTS.md` § "Skills available in this repo"), re-wire the hook in both settings files.
+*   **Cross-references:** PR #6 (Phase E adoption), `docs/superpowers/specs/2026-05-15-phase-e-skills-design.md` §9 (R1 risk analysis), `docs/superpowers/plans/2026-05-15-phase-e-skills.md` Task 9 (smoke-test procedure).

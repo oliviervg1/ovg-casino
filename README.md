@@ -39,7 +39,7 @@ ovg-casino-concierge/
 │   └── frontend_widget.html        # Embedded snippet for casino.oliviervg.com (Handlebars carousel)
 ├── docs/superpowers/               # Specs and implementation plans (cxas retrofit roadmap)
 ├── .env                            # Google Cloud env vars (gitignored)
-└── venv/                           # Python virtual environment (gitignored)
+└── .venv/                          # Python virtual environment (gitignored)
 ```
 
 ## Local development
@@ -53,7 +53,7 @@ Setup:
 ```bash
 git clone <repo-url>
 cd ovg-casino-concierge
-python3 -m venv venv && source venv/bin/activate
+python3 -m venv .venv && source .venv/bin/activate
 pip install --upgrade pip
 pip install cxas-scrapi
 
