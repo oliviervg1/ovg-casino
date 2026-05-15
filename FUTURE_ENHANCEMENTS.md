@@ -123,7 +123,7 @@ While the foundational architecture is robust, several improvements would meanin
     *   AppVersion + Deployment-based prod pinning is queued under Phase D of the cxas retrofit (originally cross-referenced as §4.4).
 *   **Remaining work:**
     *   **BigQuery + Vertex AI Search:** still need to be ported to Terraform. Both have mature providers.
-    *   Phases B (lint), C (evals), D (CI/CD with AppVersion pinning), and E (Claude Code skills) of the cxas retrofit. See the spec for details.
+    *   Phase D (CI/CD with AppVersion pinning) of the cxas retrofit. Phases B, C, and E have shipped. See the spec for details.
 
 ### 4.7 Prompt rewrite to avoid negative triggers (I004)
 *   **Status:** Deferred. The cxas lint rule `I004 negative-triggers` is downgraded to `info` in `cxaslint.yaml` because the no-results fallback and silence-detection triggers in `instruction.txt` legitimately depend on a negative condition.
