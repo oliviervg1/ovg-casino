@@ -30,13 +30,14 @@ ovg-casino-concierge/
 │       └── evaluations/                # Native CES evaluations (eval suite expanded in Phase C)
 ├── data/
 │   ├── raw/games.md                # Human-readable catalog of all 24 games
-│   └── processed/games_catalog.csv # Structured catalog for BigQuery / Vertex AI Search
+│   └── processed/
+│       ├── games_catalog.csv       # Structured catalog for BigQuery / Vertex AI Search
+│       └── schema.json             # BigQuery schema for games_inventory
 ├── scripts/
 │   ├── parse_games_to_csv.py       # Scrapes casino frontend bundle → games_catalog.csv
 │   ├── update_games_md.py          # Regenerates games.md from the CSV
 │   └── frontend_widget.html        # Embedded snippet for casino.oliviervg.com (Handlebars carousel)
 ├── docs/superpowers/               # Specs and implementation plans (cxas retrofit roadmap)
-├── schema.json                     # BigQuery schema for games_inventory
 ├── .env                            # Google Cloud env vars (gitignored)
 └── venv/                           # Python virtual environment (gitignored)
 ```
