@@ -117,3 +117,7 @@ While the foundational architecture is robust, several improvements would meanin
 *   **Remaining work:**
     *   **BigQuery + Vertex AI Search:** still need to be ported to Terraform. Both have mature providers.
     *   Phases B (lint), C (evals), D (CI/CD with AppVersion pinning), and E (Claude Code skills) of the cxas retrofit. See the spec for details.
+
+### 4.7 Prompt rewrite to avoid negative triggers (I004)
+*   **Status:** Deferred. The cxas lint rule `I004 negative-triggers` is downgraded to `info` in `cxaslint.yaml` because the no-results fallback and silence-detection triggers in `instruction.txt` legitimately depend on a negative condition.
+*   **Improvement:** A focused prompt-improvement pass to find phrasings that satisfy the rule without losing clarity (e.g., trigger on "the result list is empty" rather than "no results"). Then re-enable I004 at warning severity in `cxaslint.yaml`.

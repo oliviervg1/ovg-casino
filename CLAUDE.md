@@ -28,7 +28,7 @@ Two built-in tools the agent uses without a tool definition: `end_session` (with
 
 ## CX Agent Studio conventions (non-obvious)
 
-- **Tool execution syntax in prompts:** Do **not** use Dialogflow CX `${TOOL:tool_name}` syntax. In `<action>` blocks use natural language: `execute the tool_name tool with arguments key="value".` In `<examples>`, represent calls as `<agent>Execute tool \`tool_name\` with arguments: \`{"key": "value"}\`</agent>` followed by a `<tool_response>` block, then a final `<agent>` natural-language response based on the data.
+- **Tool/agent reference syntax in `instruction.txt`:** Use the canonical CES forms `{@TOOL: tool_name}` and `{@AGENT: Agent Name}` for tool/agent references that the LLM should resolve (the cxas linter rule `I011` enforces this; `I012` flags references the linter can't see). Do not use the older Dialogflow CX form `${TOOL:tool_name}`. Inside `<examples>` blocks, the literal `<agent>Execute tool \`tool_name\` with arguments: \`{"key": "value"}\`</agent>` pattern (followed by a `<tool_response>` block, then a final natural-language `<agent>` response) is the conventional way to *show* a tool call in simulated dialogue and stays as-is.
 - **Variable interpolation:** Use `{user_first_name}` (single braces) in prompts — this is the format CX Agent Studio expects for query parameters passed via `setQueryParameters`. See recent commits for prior fixes around this.
 - **Widget rendering:** `ces-messenger` does NOT support CX Agent Studio's native `WidgetTool` components (e.g. `PRODUCT_CAROUSEL`). Rich UI must go through the Client Function + Handlebars template pattern:
   1. **Backend tool:** `display_game_widget` is configured as a **Client Function** tool.
@@ -69,6 +69,15 @@ Project is on `main`; commit author is `Olivier Van Goethem <ovg@google.com>`.
 - `cxas apps` is a parent command; use `cxas apps list` or `cxas apps get`.
 - `cxas delete` uses `--app-name <full-resource>`, not a positional argument.
 - `cxas push` and `cxas ci-test` both accept `--env-file` to inject `environment.json` (which holds the per-environment Vertex AI Search engine/datastore paths via `$env_var` resolution). Always pass it.
+- `cxas lint` reads `cxaslint.yaml` from the value of `--app-dir` (treats it as project root). Our `cxaslint.yaml` lives at repo root and sets `app_dir: cxas_app/Casino_Concierge`, so the canonical invocation is plain `cxas lint` from the repo root (NOT `cxas lint --app-dir cxas_app/Casino_Concierge`, which would look for cxaslint.yaml inside the app dir and miss it).
+
+### Linting
+
+`cxas lint` (run from repo root, no flags needed) checks the agent against the cxas-scrapi linter ruleset. Configuration lives in `cxaslint.yaml` at repo root — severity overrides only, with inline rationale comments for each suppression.
+
+The pre-push git hook in `.githooks/pre-push` enforces this on every `git push`; bypassable with `--no-verify` for emergencies. Phase D will add a non-bypassable CI gate.
+
+Re-enable any rule by removing its line from `cxaslint.yaml`. The hook uses cxas's exit code (non-zero = errors found), so any new rule violations introduced by an edit will block the push.
 
 ### MCP `update_agent` — deprecated
 
