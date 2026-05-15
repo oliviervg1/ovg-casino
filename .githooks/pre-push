@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+# Run cxas lint before any git push.
+# Bypassable with --no-verify (intentional escape hatch).
+# Phase D's CI lint job will be the unbypassable gate.
+#
+# Reads cxaslint.yaml from repo root (which sets app_dir to cxas_app/Casino_Concierge).
+# Run from repo root via the git pre-push hook.
+set -uo pipefail
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+cd "$REPO_ROOT"
+
+if [ ! -f venv/bin/activate ]; then
+  echo "pre-push: no venv/ found — run 'python3 -m venv venv && pip install cxas-scrapi' (see README)." >&2
+  exit 1
+fi
+
+# shellcheck disable=SC1091
+source venv/bin/activate
+
+if ! command -v cxas >/dev/null 2>&1; then
+  echo "pre-push: cxas not on PATH after venv activation. Run 'pip install cxas-scrapi'." >&2
+  exit 1
+fi
+
+# Run cxas lint and pass through its output. cxas exits non-zero when it
+# reports errors; we forward that exit code to git so the push is blocked.
+cxas lint
+LINT_EXIT=$?
+if [ "$LINT_EXIT" -ne 0 ]; then
+  echo "" >&2
+  echo "pre-push: cxas lint exited $LINT_EXIT. Fix or rerun with --no-verify to bypass." >&2
+  exit 1
+fi

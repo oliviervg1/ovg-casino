@@ -1,0 +1,37 @@
+# Lint policy for the OVG Casino Concierge.
+# Default severities are defined per-rule in cxas_scrapi; this file overrides
+# only where our project's tool composition or domain warrants it.
+#
+# Run from repo root: `cxas lint` (or equivalently `cxas lint --app-dir .`).
+# The linter treats --app-dir as the project root and reads cxaslint.yaml from
+# there; the `app_dir` setting below points it at the actual app directory.
+
+app_dir: cxas_app/Casino_Concierge
+
+rules:
+  # Python-tool-specific rules. Our tools are dataStoreTool and clientFunction,
+  # neither of which has Python code. Re-enable these (remove from this file)
+  # if a real Python tool is ever added.
+  T001: off  # tool-error-pattern: error-return shape — N/A without Python
+  T002: off  # tool-docstring: docstring routing — N/A without Python
+  T004: off  # tool-fn-name: function name vs dir — N/A without Python
+
+  # Domain-specific suppression: this is a casino concierge with no
+  # time-dependent behavior. Today's date is not in the agent's context budget.
+  I014: off  # missing-current-date
+
+  # cxas-scrapi's v1beta DataStore proto doesn't include the `engineType`
+  # field, but the live CES API requires it (or default-injects it on push).
+  # Removing it locally produces a clean lint but the field reappears on
+  # every pull — unsustainable. Suppressing here until cxas-scrapi's proto
+  # catches up. Re-enable (remove this line) once cxas-scrapi's
+  # google.cloud.ces.v1beta.DataStore message includes engineType.
+  V003: off  # schema-tool-valid: engineType field absent from v1beta proto
+
+  # TODO: revisit. Fires on the no-results fallback and silence-detection
+  # triggers in instruction.txt. Both are legitimately about a negative
+  # condition, and the obvious rewrites ("an empty list", "the silence count
+  # is zero") read awkwardly. Worth a focused prompt-improvement pass to find
+  # phrasings that satisfy the rule without losing clarity. Until then,
+  # downgraded to info so the warning stays visible.
+  I004: info  # negative-triggers

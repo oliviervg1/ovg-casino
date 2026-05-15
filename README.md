@@ -56,6 +56,9 @@ cd ovg-casino-concierge
 python3 -m venv venv && source venv/bin/activate
 pip install --upgrade pip
 pip install cxas-scrapi
+
+# Enable the pre-push lint hook (one-time per clone).
+git config core.hooksPath .githooks
 ```
 
 Pull the latest agent state from CES (overwrites `cxas_app/`):
