@@ -1,7 +1,7 @@
 {
   "name": "c4242f9c-3b93-4c92-a69c-a035daabc0c8",
   "displayName": "Casino Concierge",
-  "rootAgent": "Casino Concierge",
+  "rootAgent": "Casino_Concierge",
   "audioProcessingConfig": {
     "synthesizeSpeechConfigs": {
       "en-US": {
