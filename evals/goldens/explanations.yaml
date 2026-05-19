@@ -1,0 +1,23 @@
+# Phase C — explanations Goldens
+# Asserts tool-call logic for explanations (if any). 
+# Note: Explanations are mostly text-based, so these are minimal.
+
+common_session_parameters:
+  user_first_name: ""
+
+conversations:
+  - conversation: explain_roulette_isolated
+    tags: [P0, explanations]
+    turns:
+      - user: "How do I play Roulette?"
+        agent: "# silent — semantic check in simulations"
+  - conversation: explain_slots_isolated
+    tags: [P0, explanations]
+    turns:
+      - user: "Can you explain Slots to me?"
+        agent: "# silent — semantic check in simulations"
+  - conversation: explain_bingo_isolated
+    tags: [P0, explanations]
+    turns:
+      - user: "What is Bingo all about?"
+        agent: "# silent — semantic check in simulations"

@@ -1,0 +1,99 @@
+# Phase C — discovery Goldens
+# Realistic discovery flows, testing personalization and tool calls.
+
+common_session_parameters:
+  user_first_name: "Alex"
+
+conversations:
+  - conversation: personalized_greeting
+    tags: [P0, discovery, personalized]
+    turns:
+      - user: "Hello there!"
+        agent: "Welcome to the casino, Alex! We are so excited to have you here. What kind of experience are you looking for today? Do you prefer fast-paced action or a relaxed atmosphere?"
+      - user: "I'm in the mood for something with an ocean theme."
+        tool_calls:
+          - action: search_available_games
+            args:
+              query:
+                $matchType: contains
+                value: "ocean"
+          - action: display_game_widget
+            args:
+              template_id: "game_carousel"
+              context:
+                games:
+                  $matchType: ignore
+        agent: "# silent — recommendation text varies"
+
+  - conversation: vague_discovery_fallback
+    tags: [P0, discovery]
+    turns:
+      - user: "Hi, I just want to play something fun."
+        tool_calls:
+          - action: search_available_games
+            args:
+              query:
+                $matchType: contains
+                value: "slots"
+          - action: display_game_widget
+            args:
+              template_id: "game_carousel"
+              context:
+                games:
+                  $matchType: ignore
+        agent: "# silent"
+
+  - conversation: discovery_no_results_fallback
+    tags: [P0, discovery]
+    turns:
+      - user: "Do you have any games about Victorian era knitting?"
+        tool_calls:
+          - action: search_available_games
+            args:
+              query:
+                $matchType: ignore
+        agent: "# silent — fallback text should mention standard games"
+      - user: "Okay, then tell me how to play Roulette."
+        agent: "# silent — explanation check moved to simulations"
+
+  - conversation: discovery_refined
+    tags: [P0, discovery]
+    turns:
+      - user: "Show me some space games."
+        tool_calls:
+          - action: search_available_games
+            args:
+              query:
+                $matchType: contains
+                value: "space"
+          - action: display_game_widget
+            args:
+              template_id: "game_carousel"
+              context:
+                games:
+                  $matchType: ignore
+        agent: "# silent"
+      - user: "Actually, do you have any that are more relaxed?"
+        tool_calls:
+          - action: search_available_games
+            args:
+              query:
+                $matchType: contains
+                value: "relaxed"
+          - action: display_game_widget
+            args:
+              template_id: "game_carousel"
+              context:
+                games:
+                  $matchType: ignore
+        agent: "# silent"
+
+  - conversation: goodbye_direct
+    tags: [P0, discovery, audio_critical]
+    turns:
+      - user: "Thanks for the help, I'm done for today. Bye!"
+        tool_calls:
+          - action: end_session
+            args:
+              reason: "customer_query_ended"
+        agent: "# silent"
