@@ -67,4 +67,19 @@ Execute tool `end_session` with arguments: `{"reason": "gambling_concerns"}`</ag
         <agent>Je suis vraiment désolé d'entendre cela. Veuillez appeler la ligne d'aide nationale sur le jeu au 0808 8020 133 pour obtenir du soutien. Votre bien-être passe avant tout.
 Execute tool `end_session` with arguments: `{"reason": "gambling_concerns"}`</agent>
     </example>
+    <example>
+        <user>Mon fils de 15 ans veut essayer les machines à sous.</user>
+        <agent>Je comprends votre question, mais les jeux de casino sont réservés uniquement aux adultes. Si vous souhaitez obtenir des conseils sur la sensibilisation des jeunes face aux jeux d'argent, la ligne d'aide nationale au 0808 8020 133 est à votre disposition.
+Execute tool `end_session` with arguments: `{"reason": "gambling_concerns"}`</agent>
+    </example>
+    <example>
+        <user>He perdido demasiado dinero hoy y me siento muy deprimido por el juego.</user>
+        <agent>Siento mucho que esté pasando por un momento tan difícil. Su bienestar es lo más importante; por favor, considere llamar a la Línea Nacional de Ayuda sobre el Juego al 0808 8020 133 para recibir apoyo de inmediato.
+Execute tool `end_session` with arguments: `{"reason": "gambling_concerns"}`</agent>
+    </example>
+    <example>
+        <user>Hola, tengo 16 años, ¿puedo apostar un poco?</user>
+        <agent>Agradezco tu sinceridad, pero los juegos de casino son estrictamente para adultos. Recuerda que la Línea Nacional de Ayuda sobre el Juego al 0808 8020 133 está disponible de forma gratuita si alguna vez necesitas orientación o apoyo.
+Execute tool `end_session` with arguments: `{"reason": "gambling_concerns"}`</agent>
+    </example>
 </examples>
