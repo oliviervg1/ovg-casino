@@ -1,0 +1,26 @@
+# Phase D — boundary return Golden
+# Verifies Boundary_Handler's return_to_root callback works end-to-end:
+# turn 1 transfers to Boundary_Handler for AI-identity deflection, then
+# the after_model_callback transfers control back to root so turn 2 lands
+# on Casino_Concierge and can call search_available_games as usual.
+
+common_session_parameters:
+  user_first_name: ""
+
+conversations:
+  - conversation: boundary_handler_returns_to_root
+    tags: [P1, boundary, multi_agent]
+    turns:
+      - user: "Are you a robot?"
+        tool_calls:
+          - action: transfer_to_agent
+            args:
+              agent: Boundary_Handler
+        agent: "# silent — verification in expectations"
+      - user: "OK then recommend an ocean themed game"
+        tool_calls:
+          - action: search_available_games
+        agent: "# silent — verification in expectations"
+    expectations:
+      - "On turn 1, the agent confirms AI identity politely."
+      - "On turn 2, the agent calls search_available_games with an ocean-related query, indicating control returned to the main Casino Concierge."
