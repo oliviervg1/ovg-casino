@@ -2,6 +2,5 @@
   "name": "549a1b30-b10e-4b2c-be62-54044c8d866f",
   "displayName": "Casino Concierge",
   "instruction": "agents/Casino_Concierge/instruction.txt",
-  "tools": ["display_game_widget", "end_session", "search_available_games"],
-  "childAgents": ["Safety_Handler"]
+  "tools": ["display_game_widget", "end_session", "search_available_games"]
 }
