@@ -3,5 +3,5 @@
   "displayName": "Casino_Concierge",
   "instruction": "agents/Casino_Concierge/instruction.txt",
   "tools": ["display_game_widget", "end_session", "search_available_games"],
-  "childAgents": ["Safety_Handler", "Boundary_Handler"]
+  "childAgents": ["Safety_Handler"]
 }
