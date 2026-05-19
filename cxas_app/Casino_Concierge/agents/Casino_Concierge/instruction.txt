@@ -190,5 +190,3 @@ Execute tool `display_game_widget` with arguments: `{"template_id": "game_carous
 Execute tool `end_session` with arguments: `{"reason": "customer_query_ended"}`</agent>
     </example>
 </examples>
-</example>
-</examples>
