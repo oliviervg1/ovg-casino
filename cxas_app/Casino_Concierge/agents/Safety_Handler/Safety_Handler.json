@@ -1,0 +1,14 @@
+{
+  "name": "Safety_Handler",
+  "displayName": "Safety_Handler",
+  "instruction": "agents/Safety_Handler/instruction.txt",
+  "tools": ["end_session"],
+  "modelSettings": {
+    "model": "gemini-3-flash"
+  },
+  "afterModelCallbacks": [
+    {
+      "pythonCode": "agents/Safety_Handler/after_model_callbacks/ensure_helpline_text/python_code.py"
+    }
+  ]
+}
