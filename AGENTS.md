@@ -20,8 +20,9 @@ The agent has three tightly coupled surfaces. Changes to one usually require coo
    - `environment.json` — env-specific values that the tool definitions reference via `$env_var` placeholders (e.g., the Vertex AI Search engine + datastore resource paths).
    - `tools/{search_available_games,display_game_widget}/<name>.json` — tool definitions.
    - `guardrails/{Prompt,Safety}_Guardrail_*/<name>.json` — CES native guardrails attached to the app (already configured in prod).
-   - `evaluations/<name>/<name>.json` — CES native evaluations (one starter eval exists; full eval suite comes in Phase C of the retrofit).
-2. **Game catalog data pipeline** — game data is scraped from the casino frontend JS bundle, written to `data/processed/games_catalog.csv` (matches `data/processed/schema.json`, includes a `url` column), loaded into BigQuery (`ovg_casino.games_inventory`), then indexed by a Vertex AI Search Data Store (`ovg_casino_games_catalog`) + Engine (`ovg_casino_games_engine`). The agent calls a Datastore Tool named `search_available_games` against this index. A human-readable mirror lives at `data/raw/games.md` (regenerated from the CSV; includes direct game URLs).
+   * `evaluations/<name>/<name>.json` — CES native evaluations (synced from `evals/goldens/*.yaml`).
+   2. **Game catalog data pipeline** — game data is scraped from the casino frontend JS bundle, written to `data/processed/games_catalog.csv` (matches `data/processed/schema.json`, includes a `url` column), loaded into BigQuery (`ovg_casino.games_inventory`), then indexed by a Vertex AI Search Data Store (`ovg_casino_games_catalog`) + Engine (`ovg_casino_games_engine`). The agent calls a Datastore Tool named `search_available_games` against this index. A human-readable mirror lives at `data/raw/games.md` (regenerated from the CSV; includes direct game URLs).
+
 3. **Frontend rich-UI rendering** — `scripts/frontend_widget.html` is a snippet embedded on `casino.oliviervg.com`. It registers a Handlebars template named `game_carousel` with `ces-messenger`, and the agent's `display_game_widget` Client Function Tool emits `{template_id: "game_carousel", context: {games: [...]}}` which `ces-messenger` intercepts and renders. The same snippet also passes `user_first_name` from Firebase auth into the agent via `setQueryParameters`, and listens for `ces-end-session` to close/clear the chat when the agent calls `end_session`.
 
 Two built-in tools the agent uses without a tool definition: `end_session` (with `reason="customer_query_ended"` or `reason="gambling_concerns"`).
@@ -37,7 +38,7 @@ Two built-in tools the agent uses without a tool definition: `end_session` (with
 - **Vertex AI Search BigQuery import:** When importing structured data from BigQuery, the system defaults to looking for an `_id` column. Our schema uses `id`, so the import payload must include `"idField": "id"` or ingestion fails silently.
 - **Anti-hallucination:** Constraints in the prompt forbid recommending any game not returned by `search_available_games`. Don't loosen this without considering the regulatory framing (responsible gaming).
 - **Tone budget:** Voice is `en-US-Chirp3-HD-Zephyr`. Persona is **warm, upbeat, approachable, professional, and responsible**. Keep agent responses to 2–3 short sentences so TTS doesn't monologue.
-- **`end_session` positioning:** When the user says goodbye or expresses gambling distress, the agent must execute `end_session` immediately in the same turn — do not ask follow-up questions first. Examples in `<examples>` enforce this pattern.
+- **`end_session` positioning:** When the user says goodbye or expresses gambling distress, the agent must execute `end_session` immediately. *Audio Modality Caveat:* The `gemini-3.1-flash-live` model may suppress tool calls if it generates a long text response first. Instructions must explicitly prioritize the tool call and limit the accompanying text to a single, brief sentence to ensure `end_session` executes reliably over voice. Examples in `<examples>` enforce this pattern.
 
 ## Deployment workflow
 
@@ -70,6 +71,7 @@ Project is on `main`; commit author is `Olivier Van Goethem <ovg@google.com>`.
 - `cxas delete` uses `--app-name <full-resource>`, not a positional argument.
 - `cxas push` and `cxas ci-test` both accept `--env-file` to inject `environment.json` (which holds the per-environment Vertex AI Search engine/datastore paths via `$env_var` resolution). Always pass it.
 - `cxas lint` reads `cxaslint.yaml` from the value of `--app-dir` (treats it as project root). Our `cxaslint.yaml` lives at repo root and sets `app_dir: cxas_app/Casino_Concierge`, so the canonical invocation is plain `cxas lint` from the repo root (NOT `cxas lint --app-dir cxas_app/Casino_Concierge`, which would look for cxaslint.yaml inside the app dir and miss it).
+- **Temporary Files:** Do NOT commit evaluation reports (`eval-reports/`), experiment logs (`experiment_log.md`), results TSVs (`results.tsv`), or intermediate JSON summaries to Git. These are transient artifacts generated by the eval runner. Ensure `.gitignore` is respected and double-check `git status` before committing.
 
 ### Linting
 
@@ -91,7 +93,7 @@ Eval YAML lives at `evals/` (project root), with `evals/goldens/*.yaml` for Plat
 
 Schema gotchas the lint won't always catch:
 
-- **Goldens `agent:` field** must be a plain string or list-of-strings (rule `E007` enforces). To assert a tool fires without pinning the agent's text, set `agent: "# silent — <reason>"`. The runtime parser (`cxas_scrapi/utils/eval_utils.py:_process_dataset_turn`) skips the `agentResponse` expectation step whenever the agent string contains the substring `# silent`, so the eval doesn't false-fail on any text the agent actually produces. Without this marker, dropping `agent:` triggers `E008` and the runtime auto-FAILs the turn for "unexpected response".
+- **Goldens `agent:` field** must be a plain string or list-of-strings (rule `E007` enforces). To assert a tool fires without pinning the agent's text, set `agent: "# silent — <reason>"`. The runtime parser (`cxas_scrapi/utils/eval_utils.py:_process_dataset_turn`) skips the `agentResponse` expectation step whenever the agent string contains the substring `# silent`, so the eval doesn't false-fail on any text the agent actually produces. Without this marker, dropping `agent:` triggers `E008` and the runtime auto-FAILs the turn for "unexpected response". This `# silent` pattern is used extensively in our themed Goldens (`discovery.yaml`, `safety.yaml`, `boundaries.yaml`, `explanations.yaml`) to prevent text-matching flakiness.
 - **`$matchType`** is valid only inside `tool_calls[].args.<argname>`, never on the `agent:` field. Valid values: `ignore`, `semantic`, `contains`, `regexp` (rule `E011`).
 - **Per-conversation session-param overrides** use the field `session_parameters:` (Pydantic `Conversation.session_parameters`). The top-level `common_session_parameters:` is a different field and only valid at the document root (Pydantic `Conversations.common_session_parameters`).
 - **Simulations YAML is a top-level *list*** (no `evals:` wrapper, no `scenario:` sub-key). Each entry: `name:`, `tags:`, `steps:` (list of `{goal, success_criteria, response_guide, max_turns, static_utterance, inject_variables}`), optional `session_parameters:` and `expectations:`. Verified against `cxas_scrapi/utils/reporting.py:1597-1607` and `evals/simulations/multi_turn.yaml`'s in-file schema reference comment.
