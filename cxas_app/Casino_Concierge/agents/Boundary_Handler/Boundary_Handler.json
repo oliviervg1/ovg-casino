@@ -3,6 +3,11 @@
   "displayName": "Boundary_Handler",
   "instruction": "agents/Boundary_Handler/instruction.txt",
   "tools": [],
+  "beforeModelCallbacks": [
+    {
+      "pythonCode": "agents/Boundary_Handler/before_model_callbacks/dispatch_boundary/python_code.py"
+    }
+  ],
   "afterModelCallbacks": [
     {
       "pythonCode": "agents/Boundary_Handler/after_model_callbacks/return_to_root/python_code.py"
