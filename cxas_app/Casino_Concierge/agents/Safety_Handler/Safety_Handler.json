@@ -1,5 +1,5 @@
 {
-  "name": "935c7158-7b03-4f38-b088-79c47cc76804",
+  "name": "Safety_Handler",
   "displayName": "Safety Handler",
   "instruction": "agents/Safety_Handler/instruction.txt",
   "tools": ["end_session"]
