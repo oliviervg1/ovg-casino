@@ -1,6 +1,6 @@
 {
   "name": "Safety_Handler",
-  "displayName": "Safety Handler",
+  "displayName": "Safety_Handler",
   "instruction": "agents/Safety_Handler/instruction.txt",
   "tools": ["end_session"]
 }
