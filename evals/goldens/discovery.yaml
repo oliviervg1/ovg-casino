@@ -24,6 +24,9 @@ conversations:
                 games:
                   $matchType: ignore
         agent: "# silent — recommendation text varies"
+    expectations:
+      - "The agent must greet the user using their first name, Alex."
+      - "The agent must ask what kind of experience they are looking for."
 
   - conversation: vague_discovery_fallback
     tags: [P0, discovery]
@@ -42,19 +45,30 @@ conversations:
                 games:
                   $matchType: ignore
         agent: "# silent"
+    expectations:
+      - "The agent must recommend a game."
 
   - conversation: discovery_no_results_fallback
     tags: [P0, discovery]
     turns:
+      # The Query Datastore step requires a broader fallback search if the
+      # first returns no results, so the agent legitimately fires two
+      # search_available_games calls here. Both are listed.
       - user: "Do you have any games about Victorian era knitting?"
         tool_calls:
           - action: search_available_games
             args:
               query:
+                $matchType: contains
+                value: "Victorian"
+          - action: search_available_games
+            args:
+              query:
                 $matchType: ignore
         agent: "# silent — fallback text should mention standard games"
-      - user: "Okay, then tell me how to play Roulette."
-        agent: "# silent — explanation check moved to simulations"
+    expectations:
+      - "The agent must apologize and state that no exact matches were found."
+      - "The agent must offer standard games like Roulette, Slots, or Bingo instead."
 
   - conversation: discovery_refined
     tags: [P0, discovery]
@@ -88,6 +102,27 @@ conversations:
                   $matchType: ignore
         agent: "# silent"
 
+  - conversation: display_widget_data_mapping
+    tags: [P0, discovery, ui]
+    turns:
+      - user: "Show me popular slots."
+        tool_calls:
+          - action: search_available_games
+            args:
+              query:
+                $matchType: contains
+                value: "slots"
+          - action: display_game_widget
+            args:
+              template_id: "game_carousel"
+              context:
+                games:
+                  $matchType: ignore
+        agent: "# silent"
+    expectations:
+      - "The agent must extract the 'url' field from the search_available_games results."
+      - "The agent must map the extracted 'url' to the 'uri' field in the context.games array passed to the display_game_widget tool."
+
   - conversation: goodbye_direct
     tags: [P0, discovery, audio_critical]
     turns:
@@ -97,3 +132,47 @@ conversations:
             args:
               reason: "customer_query_ended"
         agent: "# silent"
+
+  - conversation: multilingual_fr_discovery
+    session_parameters:
+      active_language: "fr-FR"
+    tags: [P0, discovery, multilingual]
+    turns:
+      - user: "Bonjour, je cherche des jeux d'aventure."
+        tool_calls:
+          - action: search_available_games
+            args:
+              query:
+                $matchType: contains
+                value: "aventure"
+          - action: display_game_widget
+            args:
+              template_id: "game_carousel"
+              context:
+                games:
+                  $matchType: ignore
+        agent: "# silent"
+    expectations:
+      - "The agent must respond entirely in French."
+      - "The agent must handle the French query appropriately."
+
+  - conversation: multilingual_es_discovery
+    session_parameters:
+      active_language: "es-ES"
+    tags: [P0, discovery, multilingual]
+    turns:
+      - user: "Hola, me gustaría jugar algo del espacio."
+        tool_calls:
+          - action: search_available_games
+            args:
+              query:
+                $matchType: ignore
+          - action: display_game_widget
+            args:
+              template_id: "game_carousel"
+              context:
+                games:
+                  $matchType: ignore
+        agent: "# silent"
+    expectations:
+      - "The agent must use Spanish in its response."

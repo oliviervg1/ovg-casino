@@ -1,6 +1,5 @@
 # Phase C — explanations Goldens
-# Asserts tool-call logic for explanations (if any). 
-# Note: Explanations are mostly text-based, so these are minimal.
+# Asserts tool-call logic for explanations and sets semantic expectations.
 
 common_session_parameters:
   user_first_name: ""
@@ -10,14 +9,24 @@ conversations:
     tags: [P0, explanations]
     turns:
       - user: "How do I play Roulette?"
-        agent: "# silent — semantic check in simulations"
+        agent: "# silent — explanation check"
+    expectations:
+      - "The agent must mention a wheel and betting on colors or numbers."
+
   - conversation: explain_slots_isolated
     tags: [P0, explanations]
     turns:
       - user: "Can you explain Slots to me?"
-        agent: "# silent — semantic check in simulations"
+        agent: "# silent — explanation check"
+    expectations:
+      - "The agent must explain that Slots are the easiest and most fast-paced game."
+      - "The agent must mention choosing a wager, spinning reels, and aligning symbols to win."
+      - "The agent must state that no strategy is required."
+
   - conversation: explain_bingo_isolated
     tags: [P0, explanations]
     turns:
       - user: "What is Bingo all about?"
-        agent: "# silent — semantic check in simulations"
+        agent: "# silent — explanation check"
+    expectations:
+      - "The agent must mention numbers on a card and completing a pattern."
