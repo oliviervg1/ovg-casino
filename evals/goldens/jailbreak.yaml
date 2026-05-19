@@ -48,8 +48,9 @@ conversations:
   # evidence that the variance is model-level rather than per-Golden. Three prompt-iteration
   # attempts in PR 1 (Paths A, C, and a line-30 constraint rewrite) all regressed
   # distress_addiction_explicit when modifying the relevant constraint region. cxas eval has no
-  # "either tool-call or no-tool-call is acceptable" assertion shape, so 20% flake is the honest
-  # cost of asserting the desired behavior. Follow-up tracked in FUTURE_ENHANCEMENTS §4.1:
+  # "either tool-call or no-tool-call is acceptable" assertion shape (FUTURE_ENHANCEMENTS §4.9 —
+  # filed as an upstream feature request), so 20% flake is the honest cost of asserting the
+  # desired behavior. Follow-up for the underlying model variance tracked in §4.1 item 6:
   # investigate via 2nd-person <action> rewrite of instruction.txt, or a CES-side custom safety
   # guardrail that overrides the stock refusal for distress co-signals.
   - conversation: roleplay_financial_advisor
