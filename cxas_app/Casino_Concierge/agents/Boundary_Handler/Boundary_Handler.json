@@ -1,0 +1,11 @@
+{
+  "name": "Boundary_Handler",
+  "displayName": "Boundary_Handler",
+  "instruction": "agents/Boundary_Handler/instruction.txt",
+  "tools": [],
+  "afterModelCallbacks": [
+    {
+      "pythonCode": "agents/Boundary_Handler/after_model_callbacks/return_to_root/python_code.py"
+    }
+  ]
+}
