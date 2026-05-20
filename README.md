@@ -155,7 +155,7 @@ The agent is capable of asking users about their preferred themes or playstyles 
 *   The agent detects frustration or mentions of gambling problems.
 *   It dynamically executes a custom Python Function Tool (`get_responsible_gaming_helpline`) to resolve the appropriate helpline name and phone number depending on the active locale (`en-GB`, `en-US`, `fr-FR`, or `es-ES`).
 *   It responds empathetically using the correct regional organization name and contact number (e.g., *Joueurs Info Service* for French users, *Línea de Ayuda de FEJAR* for Spanish users, and *National Gambling Helpline* for US/UK users), keeping helpline configurations completely isolated from the system instructions.
-*   After offering support, or when a user indicates the conversation is over, the agent utilizes the built-in `end_session` tool (with `reason="gambling_concerns"` or `reason="customer_query_ended"`) to gracefully close the interaction.
+*   After offering support, or when a user indicates the conversation is over, the agent utilizes the built-in `end_session` tool (with `reason="responsible_gambling"` or `reason="customer_query_ended"`) to gracefully close the interaction.
 
 ---
 
