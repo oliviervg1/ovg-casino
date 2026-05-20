@@ -12,7 +12,7 @@ Currently, it successfully:
 7. Resists persona-override / jailbreak attempts via a dedicated taskflow step and example, **and** has two CES native guardrails attached (`Prompt Guardrail` using `llmPromptSecurity`; `Safety Guardrail` blocking the four standard harm categories at `BLOCK_MEDIUM_AND_ABOVE`).
 8. Enforces strict anti-hallucination constraints (only recommends games returned by `search_available_games`, with a broader-query fallback before giving up).
 9. Logs all conversations to BigQuery (`gecx_logs` dataset) and Cloud Logging, with text redaction enabled and a 1-year retention window.
-10. Is fully version-controlled under `cxas_app/Casino_Concierge/` and deployed via the cxas-scrapi CLI (`cxas push`); see `CLAUDE.md` for the full deploy workflow and `docs/superpowers/specs/2026-05-15-cxas-scrapi-retrofit-design.md` for the ongoing tooling roadmap (lint, evals, CI/CD, Claude Code skills).
+10. Is fully version-controlled under `cxas_app/Casino_Concierge/` and deployed via the cxas-scrapi CLI (`cxas push`); see `AGENTS.md` for the full deploy workflow and the ongoing tooling roadmap (lint, evals, CI/CD, CLI skills).
 
 While the foundational architecture is robust, several improvements would meaningfully raise safety, reliability, and operational maturity.
 
@@ -20,24 +20,15 @@ While the foundational architecture is robust, several improvements would meanin
 
 ## 1. Safety & Compliance
 
-### 1.1 Locale-Aware Responsible Gaming Resources
-*   **Current State:** The agent supports `en-US`, `fr-FR`, and `es-ES`, but only cites the UK National Gambling Helpline (`0808 8020 133`) regardless of the user's language. A French speaker hearing a UK number is broken UX *and* a compliance gap.
-*   **Improvement:** Add per-locale resources resolved at response time:
-    *   `en-US` → 1-800-GAMBLER (National Council on Problem Gambling)
-    *   `en-GB` → 0808 8020 133 (GambleAware / National Gambling Helpline)
-    *   `fr-FR` → 09 74 75 13 13 (Joueurs Info Service)
-    *   `es-ES` → FEJAR helpline (regional)
-    Drive selection from the active language code rather than hard-coding into the prompt.
-
-### 1.2 Native CES Guardrails for Content Filtering
+### 1.1 Native CES Guardrails for Content Filtering
 *   **Status (2026-05-15):** Partially shipped. Basic guardrails are active in prod; the gambling-distress-specific flow (locale helpline + forced `end_session`) is still TBD.
 *   **Currently deployed** (visible in `cxas_app/Casino_Concierge/guardrails/`):
     *   `Prompt Guardrail 1772646260685` — `llmPromptSecurity` with default settings; action `generativeAnswer` (rewrites unsafe input rather than blocking).
     *   `Safety Guardrail 1772646260685` — `modelSafety` blocking `HARM_CATEGORY_HATE_SPEECH`, `HARM_CATEGORY_DANGEROUS_CONTENT`, `HARM_CATEGORY_SEXUALLY_EXPLICIT`, and `HARM_CATEGORY_HARASSMENT` at `BLOCK_MEDIUM_AND_ABOVE`.
 *   **Remaining work:**
-    *   **Note (2026-05-19, PR 1 of agent-tightening):** prompt-level underage handling has shipped (`instruction.txt` "Address Underage Self-Disclosure" step + companion strengthening of the "Address Gambling Concerns" trigger). Self-disclosed underage (first-person *and* third-party-child framings like "Can my 14-year-old play?") now fires `end_session(reason='gambling_concerns')` with the helpline. The guardrail-level work below remains as parallel defense in depth — both layers should fire for underage signals, and a CES-side guardrail also gives us a tool for the roleplay-variance pattern surfaced under §4.1 (the model's stock bare-refusal bypasses prompt logic ~10-20% of the time on roleplay-jailbreak inputs that co-signal distress).
+    *   **Note (2026-05-19, PR 1 of agent-tightening):** prompt-level underage handling has shipped (`instruction.txt` "Address Underage Self-Disclosure" step + companion strengthening of the "Address Gambling Concerns" trigger). Self-disclosed underage (first-person *and* third-party-child framings like "Can my 14-year-old play?") now fires `end_session(reason='responsible_gambling')` with the helpline. The guardrail-level work below remains as parallel defense in depth — both layers should fire for underage signals, and a CES-side guardrail also gives us a tool for the roleplay-variance pattern surfaced under §4.1 (the model's stock bare-refusal bypasses prompt logic ~10-20% of the time on roleplay-jailbreak inputs that co-signal distress).
     *   A custom `llmPolicy` (or tuned `llmPromptSecurity`) with `policyScope: USER_QUERY` specifically classifying gambling addiction signals, financial distress, or underage self-disclosure.
-    *   On trigger: switch the action from `generativeAnswer` to `respondImmediately` with the locale-appropriate helpline (per §1.1) and force `end_session` with `reason="gambling_concerns"`.
+    *   On trigger: switch the action from `generativeAnswer` to `respondImmediately` with the locale-appropriate helpline (using `get_responsible_gaming_helpline`) and force `end_session` with `reason="responsible_gambling"`.
     *   A `contentFilter` guardrail for an explicit banned-phrase list (e.g., underage signals like "I'm 16," "as a minor"). The deployed `modelSafety` covers generic harm categories but does not enforce a custom phrase list.
 
 ---
@@ -81,23 +72,23 @@ While the foundational architecture is robust, several improvements would meanin
 *   **Currently deployed** (in `evals/` at repo root and pushed to prod via `cxas push-eval`):
     *   **Themed Goldens (`discovery.yaml`, `safety.yaml`, `boundaries.yaml`, `explanations.yaml`)**: Replaced the monolithic `happy_path` and `tool_usage` files. These now extensively use the `# silent` agent response pattern to exclusively verify tool-call contracts without failing on benign text variations.
     *   **Atomized Simulations (`simulations.yaml`)**: Multi-turn LLM-driven scenarios (e.g., `full_personalized_discovery_cycle`, `safety_distress_handling`). These evaluate semantic tone, AI identity disclosure, and complex state changes. They were deliberately atomized into single-purpose scenarios (e.g., separating boundaries testing from distress handling) to prevent the user-LLM from derailing multi-step flows due to correct agent refusals.
-    *   **Audio Tool-Call Dropping & Interception Bug:** In audio and chat modalities on `gemini-3.1-flash-live`, generating long empathetic text and executing a terminal action (`end_session`) in the same turn frequently caused the platform to drop the text. Originally mitigated via prompt constraints, this has now been completely resolved by implementing the **Prompt-First Tool-Injection Pattern** on the `Safety_Handler` sub-agent: the instruction prompt is kept entirely text-only to allow reliable LLM text generation, and the `ensure_helpline_text` after-model callback programmatically appends the native `end_session` tool call in memory, providing a bulletproof and elegant architecture.
-    *   **Platform Orphan Cleanup:** 33 obsolete evaluations from early testing phases were manually deleted from the CES platform to clean up the dashboard.
-*   **Remaining work:** Phase D wires `cxas push-eval` + `cxas run` into GH Actions as the unbypassable CI gate; manual runs are the gate today.
+    *   **Direct Model end_session Tool Calls (Callback Removal):** During subsequent optimization passes, the multi-turn evaluations were aligned to verify native tool execution. To simplify the architecture, the "Prompt-First Tool-Injection" pattern (which relied on after-model/after-agent python callbacks) was retired. The `Safety_Handler` prompt instructions now directly call `get_responsible_gaming_helpline` and `end_session` natively within the system prompts, standardizing mock examples on correct JSON arguments (`{"reason": "responsible_gambling"}`). All python callback folders and registrations have been completely removed from disk and app configurations, keeping the agent fully native and tool-driven.
+    *   **Platform Orphan Cleanup:** 33 obsolete evaluations from early testing stages were manually deleted from the CES platform to clean up the dashboard.
+*   **Remaining work:** Automated CI/CD integration wires `cxas push-eval` + `cxas run` into GH Actions as the unbypassable CI gate; manual runs are the gate today.
 
 ### 4.2 Voice-Channel Evaluation
-*   **Status (2026-05-15, Phase C):** **Shipped.** Audio-channel coverage is implemented as a tag-based subset of the existing Goldens.
+*   **Status (2026-05-15):** **Shipped.** Audio-channel coverage is implemented as a tag-based subset of the existing Goldens.
 *   **Currently deployed:** A subset of `evals/goldens/discovery.yaml` and `evals/goldens/safety.yaml` conversations carry the `audio_critical` tag (5 conversations). Run via `cxas run --tags audio_critical --modality audio --wait`. The same Goldens go through TTS+STT round-trip so we catch markdown bleed-through, spelled-out URLs, and tone drift in spoken output.
-*   **Remaining work:** Phase D adds the CI invocation. Audio runs are slow — keep the `audio_critical` tag scoped narrowly to conversations where TTS-specific issues matter.
+*   **Remaining work:** Automated CI/CD integration adds the CI invocation. Audio runs are slow — keep the `audio_critical` tag scoped narrowly to conversations where TTS-specific issues matter.
 
 ### 4.3 Persona-Stability / Jailbreak Eval Suite
-*   **Status (2026-05-15, Phase C):** **Shipped.** Dedicated boundaries and safety Golden suites with sub-category tagging.
+*   **Status (2026-05-15):** **Shipped.** Dedicated boundaries and safety Golden suites with sub-category tagging.
 *   **Currently deployed:** `evals/goldens/boundaries.yaml` and `evals/goldens/safety.yaml` — 16+ conversations across attack families (`prompt_injection`, `roleplay_override`, `scope_creep`, `win_guarantee`, `underage`). Each case asserts the agent declines without leaking instructions and (for distress/underage signals) programmatically terminates the session. Threshold is 100% pass — a single jailbreak success is a safety incident.
 *   **Remaining work:** Expand the corpus as new attack patterns emerge in the wild. The `underage_self_disclosure` test was tightened to assert correct session termination. See §4.1's surfaced findings for the broader roleplay-variance pattern that prior iterations uncovered (model emits an identical stock bare-refusal on ~10-20% of roleplay-jailbreak inputs).
 
 ### 4.4 App Version Pinning & Rollback
-*   **Current State:** Post-Phase-A, the deploy workflow uses `cxas push` against the prod app from `cxas_app/Casino_Concierge/`. There is still no pinned, known-good production `AppVersion` and no quick rollback path — every push goes straight to the live draft.
-*   **Improvement (queued under Phase D of the cxas retrofit):** Use CES `AppVersion` + `Deployment` resources to pin a prod deployment to a versioned snapshot. Promotion flow: edit draft → run evals (#4.1–4.3) → snapshot to `AppVersion` → flip the prod `Deployment` to the new version. Rollback = flip back to the prior version. The implementation lives in `.github/workflows/main-deploy.yaml` and `.github/workflows/rollback.yaml` per the retrofit spec.
+*   **Current State:** Under the current repository-based workflow, the deploy workflow uses `cxas push` against the prod app from `cxas_app/Casino_Concierge/`. There is still no pinned, known-good production `AppVersion` and no quick rollback path — every push goes straight to the live draft.
+*   **Improvement (queued under automated CI/CD gating of the cxas retrofit):** Use CES `AppVersion` + `Deployment` resources to pin a prod deployment to a versioned snapshot. Promotion flow: edit draft → run evals (#4.1–4.3) → snapshot to `AppVersion` → flip the prod `Deployment` to the new version. Rollback = flip back to the prior version. The implementation lives in `.github/workflows/main-deploy.yaml` and `.github/workflows/rollback.yaml` per the retrofit spec.
 
 ### 4.5 Logging & Observability
 *   **Status (2026-05-15):** Partially shipped. Conversation logging + redaction are configured in prod; audio recording is intentionally off; the dashboard is still TBD.
@@ -108,30 +99,30 @@ While the foundational architecture is robust, several improvements would meanin
     *   **Conversation retention**: 1 year (`retentionWindow: "31536000s"`).
 *   **Remaining work:**
     *   Enable **audio recording** (`audioRecordingConfig` is currently `{}` — recording is off). The `redactionConfig` is already on, so DLP would apply to recordings the moment they're enabled.
-    *   Build the dashboard: sessions/day, average session length, distribution of `end_session.reason` values, and an alert on `gambling_concerns` spikes (potential incident or prompt regression). The data is already flowing into BigQuery — this is a Looker Studio / Looker / Cloud Monitoring pure-config job, not an agent change.
+    *   Build the dashboard: sessions/day, average session length, distribution of `end_session.reason` values, and an alert on `responsible_gambling` spikes (potential incident or prompt regression). The data is already flowing into BigQuery — this is a Looker Studio / Looker / Cloud Monitoring pure-config job, not an agent change.
 
 ### 4.6 Partial Infrastructure as Code
-*   **Status (2026-05-15):** Partially shipped for the CES side. The cxas-scrapi retrofit (`docs/superpowers/specs/2026-05-15-cxas-scrapi-retrofit-design.md`) replaced the original "version-controlled YAML/markdown + deploy script" idea with the cxas tool. BigQuery + Vertex AI Search remain on the original CLI / cURL plan.
+*   **Status (2026-05-15):** Partially shipped for the CES side. The cxas-scrapi retrofit replaced the original "version-controlled YAML/markdown + deploy script" idea with the cxas tool. BigQuery + Vertex AI Search remain on the original CLI / cURL plan.
 *   **Currently deployed:**
     *   **CES Agent Studio resources** (agents, tools, guardrails, evaluations, app config): now version-controlled under `cxas_app/Casino_Concierge/` and deployed via `cxas push`. The `prompts/system_instructions.md` mention in the original wording is obsolete — that file moved to `cxas_app/Casino_Concierge/agents/Casino_Concierge/instruction.txt`.
-    *   AppVersion + Deployment-based prod pinning is queued under Phase D of the cxas retrofit (originally cross-referenced as §4.4).
+    *   AppVersion + Deployment-based prod pinning is queued under automated CI/CD gating of the cxas retrofit (originally cross-referenced as §4.4).
 *   **Remaining work:**
     *   **BigQuery + Vertex AI Search:** still need to be ported to Terraform. Both have mature providers.
-    *   Phase D (CI/CD with AppVersion pinning) of the cxas retrofit. Phases B, C, and E have shipped. See the spec for details.
+    *   Automated CI/CD with AppVersion pinning of the cxas retrofit. Linter enforcement, evaluation suites, and skills integration have shipped. See the spec for details.
 
 ### 4.7 Prompt rewrite to avoid negative triggers (I004)
 *   **Status:** Deferred. The cxas lint rule `I004 negative-triggers` is downgraded to `info` in `cxaslint.yaml` because the no-results fallback and silence-detection triggers in `instruction.txt` legitimately depend on a negative condition.
 *   **Improvement:** A focused prompt-improvement pass to find phrasings that satisfy the rule without losing clarity (e.g., trigger on "the result list is empty" rather than "no results"). Then re-enable I004 at warning severity in `cxaslint.yaml`.
 
 ### 4.8 Upstream cxas-scrapi: drift-detection hook is a deny-all gate (R1)
-*   **Status (2026-05-15, Phase E):** Discovered, mitigated locally, upstream fix pending. The `pre-agent-push.sh` hook ships in the bundle but is unwired in our `.claude/settings.json` and `.gemini/settings.json` (commit `e78fee8`); the script remains under `.agents/skills/cxas-agent-foundry/scripts/hooks/` because the bundle is frozen as-is. The other two hooks (`pre-agent-push-lint.sh`, `post-agent-update.sh`) remain wired.
+*   **Status (2026-05-15):** Discovered, mitigated locally, upstream fix pending. The `pre-agent-push.sh` hook ships in the bundle but is unwired in our `.claude/settings.json` and `.gemini/settings.json` (commit `e78fee8`); the script remains under `.agents/skills/cxas-agent-foundry/scripts/hooks/` because the bundle is frozen as-is. The other two hooks (`pre-agent-push-lint.sh`, `post-agent-update.sh`) remain wired.
 *   **The bug:** the hook's intent (per its header comment) is to "block the push if local files are stale (platform has changes not in local)" — a one-directional check. Its implementation is `cxas pull` to a temp dir followed by `diff -rq tmp_dir app_dir`, which is bidirectional. Any normal `cxas push` produces drift output (because the whole point of pushing is that local has changes the platform doesn't yet see), so the hook treats every legitimate push as drift and blocks. Functionally a deny-all gate.
-*   **Confirmation:** smoke-tested during Phase E. With one trivial blank-line edit to `instruction.txt` the hook returns `{"hookSpecificOutput":{"hookEventName":"PreToolUse","blockToolExecution":true,...}}`. See PR #6, design spec §9 R1, plan Task 9 for the verbatim output.
+*   **Confirmation:** smoke-tested during skills rollout. With one trivial blank-line edit to `instruction.txt` the hook returns `{"hookSpecificOutput":{"hookEventName":"PreToolUse","blockToolExecution":true,...}}`. See PR #6, design spec §9 R1, plan Task 9 for the verbatim output.
 *   **Improvement (upstream):** the drift detection should be one-directional. Two viable shapes:
     *   **(a)** Compare against a stored hash of platform state from the last `cxas pull`. The hook records the hash at pull time; if the current platform state matches the stored hash, no drift (regardless of local changes). If it differs, someone made platform-side changes after our last pull → drift. Lower complexity, no timestamp dependency.
     *   **(b)** Diff in only one direction: block only on files where the platform has a version that local doesn't, ignoring files where local has changes the platform doesn't. Slightly more involved (requires per-file content comparison rather than `diff -rq`'s flat output).
 *   **Action item:** file an issue at the cxas-scrapi upstream repo describing the bug and proposing fix (a). Once shipped (and after we re-run `cxas init` per the bundle-update procedure documented in `AGENTS.md` § "Skills available in this repo"), re-wire the hook in both settings files.
-*   **Cross-references:** PR #6 (Phase E adoption), `docs/superpowers/specs/2026-05-15-phase-e-skills-design.md` §9 (R1 risk analysis), `docs/superpowers/plans/2026-05-15-phase-e-skills.md` Task 9 (smoke-test procedure).
+*   **Cross-references:** PR #6 (skills integration), skills design §9 (R1 risk analysis), skills smoke-test procedure.
 
 ### 4.9 Upstream cxas-scrapi: eval framework lacks OR-style tool-call assertions
 *   **Status (2026-05-19):** Discovered during PR 1 iteration; documented locally, upstream fix pending. Surfaced by §4.1's roleplay-variance findings and documented in an inline comment block on `evals/goldens/boundaries.yaml`.

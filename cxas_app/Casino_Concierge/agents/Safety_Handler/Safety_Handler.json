@@ -2,13 +2,8 @@
   "name": "Safety_Handler",
   "displayName": "Safety_Handler",
   "instruction": "agents/Safety_Handler/instruction.txt",
-  "tools": ["end_session"],
+  "tools": ["get_responsible_gaming_helpline", "end_session"],
   "modelSettings": {
     "model": "gemini-3.1-flash-live"
-  },
-  "afterModelCallbacks": [
-    {
-      "pythonCode": "agents/Safety_Handler/after_model_callbacks/ensure_helpline_text/python_code.py"
-    }
-  ]
+  }
 }

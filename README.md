@@ -9,7 +9,7 @@ The Casino Concierge is designed to act as a highly knowledgeable, vibrant, and 
 *   **Role:** Vibrant, welcoming, and knowledgeable Casino Concierge.
 *   **Voice:** `en-US-Chirp3-HD-Zephyr` (A warm, highly expressive, conversational American female voice utilizing Google's latest Chirp 3 HD conversational AI model).
 *   **Tone:** Warm, Upbeat, Approachable, Professional, and Responsible.
-*   **Guardrails:** Focuses on entertainment, never guarantees a win, and provides the UK National Gambling Helpline (`0808 8020 133`) for users expressing frustration or gambling concerns.
+*   **Guardrails:** Focuses on entertainment, never guarantees a win, and dynamically provides localized national gambling helplines (e.g., `0808 8020 133` for UK, `1-800-GAMBLER` for US, `09 74 75 13 13` for France, and `900 200 225` for Spain) for users expressing frustration or gambling concerns.
 
 ## Project Structure
 ```text
@@ -27,7 +27,7 @@ ovg-casino-concierge/
 │       │   ├── search_available_games/ # Datastore tool → Vertex AI Search
 │       │   └── display_game_widget/    # Client function tool → Handlebars carousel
 │       ├── guardrails/                 # Native CES guardrails (Prompt + Safety)
-│       └── evaluations/                # Native CES evaluations (eval suite expanded in Phase C)
+│       └── evaluations/                # Native CES evaluations (expanded evaluation suites)
 ├── data/
 │   ├── raw/games.md                # Human-readable catalog of all 24 games
 │   └── processed/
@@ -37,7 +37,6 @@ ovg-casino-concierge/
 │   ├── parse_games_to_csv.py       # Scrapes casino frontend bundle → games_catalog.csv
 │   ├── update_games_md.py          # Regenerates games.md from the CSV
 │   └── frontend_widget.html        # Embedded snippet for casino.oliviervg.com (Handlebars carousel)
-├── docs/superpowers/               # Specs and implementation plans (cxas retrofit roadmap)
 ├── .env                            # Google Cloud env vars (gitignored)
 └── .venv/                          # Python virtual environment (gitignored)
 ```
@@ -145,15 +144,18 @@ The agent is capable of asking users about their preferred themes or playstyles 
 *   The agent is configured with `enableMultilingualSupport` to gracefully switch context and respond in the user's preferred language.
 *   Supported Locales: English (`en-US`), French (`fr-FR`), and Spanish (`es-ES`).
 
-### 3. Responsible Gaming & Session Management
+### 3. Locale-Aware Responsible Gaming & Session Management
 *   The agent detects frustration or mentions of gambling problems.
-*   It is instructed to provide an empathetic response and offer the UK National Gambling Helpline (`0808 8020 133`).
+*   It dynamically executes a custom Python Function Tool (`get_responsible_gaming_helpline`) to resolve the appropriate helpline name and phone number depending on the active locale (`en-GB`, `en-US`, `fr-FR`, or `es-ES`).
+*   It responds empathetically using the correct regional organization name and contact number (e.g., *Joueurs Info Service* for French users, *Línea de Ayuda de FEJAR* for Spanish users, and *National Gambling Helpline* for US/UK users), keeping helpline configurations completely isolated from the system instructions.
 *   After offering support, or when a user indicates the conversation is over, the agent utilizes the built-in `end_session` tool (with `reason="gambling_concerns"` or `reason="customer_query_ended"`) to gracefully close the interaction.
 
-### 4. Prompt-First Tool-Injection Pattern
-To solve platform-level terminal action text-dropout bugs in voice and chat modalities, the **Safety_Handler** sub-agent decouples text generation from tool execution:
-*   **Text-Only Prompt:** The prompt is kept entirely text-only with NO staging or terminal tool instructions, ensuring GECX never intercepts the turn prematurely and the LLM consistently generates the full, empathetic helpline text across English, French, and Spanish.
-*   **Programmatic Tool Injection:** An after-model Python callback (`ensure_helpline_text`) intercepts the response in memory and programmatically appends the native `end_session` tool call, ensuring immediate, reliable session termination following the message delivery.
+### 4. Direct Tool Invocation & Callback Retirement
+To keep the architecture fully native, robust, and easily maintainable, the **Safety_Handler** agent executes all tool calls directly within its prompt instructions rather than relying on custom programmatic handlers or intermediate callbacks:
+*   **Fully Native Flow:** The agent prompt handles all text generation and tool invocation natively, invoking `get_responsible_gaming_helpline` followed directly by `end_session` with appropriate JSON arguments (e.g., `{"reason": "gambling_concerns"}`).
+*   **Zero Programmatic Callbacks:** The legacy "Prompt-First Tool-Injection" pattern and its associated custom Python after-agent callbacks have been completely deprecated and retired, removing custom code surfaces and standardizing on pure, native CX Agent Studio functionality.
+
+
 
 ---
 

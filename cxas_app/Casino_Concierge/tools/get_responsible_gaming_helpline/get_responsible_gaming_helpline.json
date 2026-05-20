@@ -1,0 +1,10 @@
+{
+  "name": "get_responsible_gaming_helpline",
+  "pythonFunction": {
+    "name": "get_responsible_gaming_helpline",
+    "pythonCode": "tools/get_responsible_gaming_helpline/python_function/python_code.py",
+    "description": "Retrieves the localized national responsible gaming helpline name and phone number based on the user's active locale/language."
+  },
+  "executionType": "SYNCHRONOUS",
+  "displayName": "get_responsible_gaming_helpline"
+}

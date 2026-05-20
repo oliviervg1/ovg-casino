@@ -44,13 +44,22 @@
   "modelSettings": {
     "model": "gemini-3.1-flash-live"
   },
-  "variableDeclarations": [{
-    "name": "user_first_name",
-    "description": "The first name of the authenticated user, extracted from their Google/Firebase profile.",
-    "schema": {
-      "type": "STRING"
+  "variableDeclarations": [
+    {
+      "name": "user_first_name",
+      "description": "The first name of the authenticated user, extracted from their Google/Firebase profile.",
+      "schema": {
+        "type": "STRING"
+      }
+    },
+    {
+      "name": "active_language",
+      "description": "The user's active locale/language code (e.g., 'en-GB', 'fr-FR', 'es-ES').",
+      "schema": {
+        "type": "STRING"
+      }
     }
-  }],
+  ],
   "dataStoreSettings": {
   },
   "languageSettings": {

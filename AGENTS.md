@@ -8,7 +8,7 @@ Configuration and supporting assets for the **OVG Casino Concierge**, a virtual 
 
 ## cxas-scrapi tooling
 
-The canonical CLI for managing the agent is [`cxas-scrapi`](https://googlecloudplatform.github.io/cxas-scrapi/stable/). It pulls/pushes the entire CES app as files on disk under `cxas_app/Casino_Concierge/`, replacing the older MCP-driven `update_agent` workflow. See **Deployment workflow** below for the full loop. The retrofit roadmap (lint, evals, CI/CD, Claude Code skills) is tracked in `docs/superpowers/specs/2026-05-15-cxas-scrapi-retrofit-design.md`; **Phases A (foundation), B (lint), C (evals), and E (skills) have shipped — D (CI/CD) remains.**
+The canonical CLI for managing the agent is [`cxas-scrapi`](https://googlecloudplatform.github.io/cxas-scrapi/stable/). It pulls/pushes the entire CES app as files on disk under `cxas_app/Casino_Concierge/`, replacing the older MCP-driven `update_agent` workflow. See **Deployment workflow** below for the full loop. The retrofit roadmap (lint, evals, CI/CD, Claude Code skills) has been implemented and shipped (foundation, linter enforcement, evaluation suites, and skills integration are live; automated CI/CD gating remains).
 
 ## Architecture (the parts that span multiple files)
 
@@ -20,8 +20,7 @@ The agent has three tightly coupled surfaces. Changes to one usually require coo
      - `agents/Casino_Concierge/Casino_Concierge.json` — Root agent declaration with `childAgents` mapping.
    - **Sub-Agent (`Safety_Handler`)**:
      - `agents/Safety_Handler/instruction.txt` — system prompt for safety. Handles gambling distress and underage signals.
-     - `agents/Safety_Handler/Safety_Handler.json` — sub-agent declaration with callback mappings.
-     - `agents/Safety_Handler/after_model_callbacks/ensure_helpline_text/python_code.py` — Python callback to programmatically append terminal `end_session` tool calls.
+     - `agents/Safety_Handler/Safety_Handler.json` — sub-agent declaration.
    - **App Configuration**:
      - `app.json` — app-level config: voice, multilingual locales, model, guardrails attached, logging settings.
      - `environment.json` — env-specific values referenced via `$env_var` placeholders (e.g., Vertex AI Search paths).
@@ -32,7 +31,7 @@ The agent has three tightly coupled surfaces. Changes to one usually require coo
 
 3. **Frontend rich-UI rendering** — `scripts/frontend_widget.html` is a snippet embedded on `casino.oliviervg.com`. It registers a Handlebars template named `game_carousel` with `ces-messenger`, and the agent's `display_game_widget` Client Function Tool emits `{template_id: "game_carousel", context: {games: [...]}}` which `ces-messenger` intercepts and renders. The same snippet also passes `user_first_name` from Firebase auth into the agent via `setQueryParameters`, and listens for `ces-end-session` to close/clear the chat when the agent calls `end_session`.
 
-Two built-in tools the agent uses without a tool definition: `end_session` (with `reason="customer_query_ended"` or `reason="gambling_concerns"`).
+Two built-in tools the agent uses without a tool definition: `end_session` (with `reason="customer_query_ended"` or `reason="responsible_"`).
 
 ## CX Agent Studio conventions (non-obvious)
 
@@ -45,9 +44,7 @@ Two built-in tools the agent uses without a tool definition: `end_session` (with
 - **Vertex AI Search BigQuery import:** When importing structured data from BigQuery, the system defaults to looking for an `_id` column. Our schema uses `id`, so the import payload must include `"idField": "id"` or ingestion fails silently.
 - **Anti-hallucination:** Constraints in the prompt forbid recommending any game not returned by `search_available_games`. Don't loosen this without considering the regulatory framing (responsible gaming).
 - **Tone budget:** Voice is `en-US-Chirp3-HD-Zephyr`. Persona is **warm, upbeat, approachable, professional, and responsible**. Keep agent responses to 2–3 short sentences so TTS doesn't monologue.
-- **`end_session` positioning (Prompt-First Tool-Injection):** When a user expresses gambling distress or underage signals, the root agent transfers immediately to `Safety_Handler`. To resolve platform-level audio modality tool-call dropouts on `gemini-3.1-flash-live` (where generating a long empathetic text and executing a terminal action in the same turn often drops the text response), we employ the **Prompt-First Tool-Injection Pattern**:
-  1. **Text-Only Prompt:** The `Safety_Handler` prompt generates the text response (helpline) in the appropriate language and is kept entirely text-only with no staging or terminal tool call instructions.
-  2. **Programmatic Callback Injection:** The `ensure_helpline_text` after-model callback programmatically appends the `end_session` tool call to the response in memory, guaranteeing 100% reliable terminal execution.
+- **`end_session` positioning (Direct Native Invocation):** When a user expresses gambling distress or underage signals, the root agent transfers immediately to `Safety_Handler`. The sub-agent is instructed to natively call the custom python function `get_responsible_gaming_helpline` to dynamically retrieve the correct, locale-aware helpline details, and then directly issue the built-in `end_session` tool call (with `reason="responsible_"`) within its prompt instructions. The legacy "Prompt-First Tool-Injection Pattern" and all associated custom Python after-agent callbacks have been completely deprecated and removed to maintain a fully native, callback-free, and tool-driven architecture.
 
 ## Deployment workflow
 
@@ -65,9 +62,9 @@ Two built-in tools the agent uses without a tool definition: `end_session` (with
      --project-id bigquery-demo-396708 \
      --location us
    ```
-5. Smoke-test on `https://casino.oliviervg.com`. Until Phase D's CI ships, this is the only behavioral safety net — UI/agent changes are not "done" until exercised in a browser.
+5. Smoke-test on `https://casino.oliviervg.com`. Until automated CI/CD integration is complete, this is the only behavioral safety net — UI/agent changes are not "done" until exercised in a browser.
 6. If game data changes: re-run the scraper, reload BigQuery (`ovg_casino.games_inventory`), trigger Vertex AI Search re-import. (Unchanged from prior workflow.)
-7. Commit and push to a feature branch and open a PR. Phase A established the PR-based workflow; once Phase D's CI is in place, PRs will create ephemeral CES apps and run the full eval matrix automatically.
+7. Commit and push to a feature branch and open a PR. The PR-based workflow is established; once automated CI/CD is in place, PRs will create ephemeral CES apps and run the full eval matrix automatically.
 
 Project is on `main`; commit author is `Olivier Van Goethem <ovg@google.com>`.
 
@@ -92,7 +89,7 @@ Two enforcement layers gate this:
 - `.githooks/pre-push` runs `cxas lint` on every `git push` (bypassable with `--no-verify` for emergencies).
 - `.claude/settings.json` and `.gemini/settings.json` wire the cxas-agent-foundry's `pre-agent-push-lint.sh` hook, which runs `cxas lint --json` on every `cxas push` from inside Claude Code or Gemini CLI (so an LLM agent issuing the push gets gated too). See § "Hooks & settings" below.
 
-Phase D will add a non-bypassable CI gate.
+Automated CI/CD will add a non-bypassable CI gate.
 
 Re-enable any rule by removing its line from `cxaslint.yaml`. The hook uses cxas's exit code (non-zero = errors found), so any new rule violations introduced by an edit will block the push.
 
@@ -119,7 +116,7 @@ Run a Goldens suite by tag against prod, gating strictly on the underlying eval 
 cxas run --app-name <PROD_APP> --tags <tag> --wait
 ```
 
-Avoid `--filter-auto-metrics` for Phase C-style YAMLs. The flag turns off the auto-LLM-judge AND only checks top-level `expectations:` lists; we don't author those, so `--filter-auto-metrics` always reports PASS regardless of underlying outcomes (verified in `filter_metrics_and_assess` at `cli/main.py:175-266`). Bare `cxas run --wait` uses the auto-judge correctly. **Caveat:** as of cxas-scrapi 1.2.0 the `cxas run` command prints `FINAL RESULT: FAIL` but still returns exit code 0 in some configurations — until that's fixed upstream, scrape stdout for `FINAL RESULT:` instead of relying on the exit code (Phase D's CI gate will).
+Avoid `--filter-auto-metrics` for standard Golden evaluation YAMLs. The flag turns off the auto-LLM-judge AND only checks top-level `expectations:` lists; we don't author those, so `--filter-auto-metrics` always reports PASS regardless of underlying outcomes (verified in `filter_metrics_and_assess` at `cli/main.py:175-266`). Bare `cxas run --wait` uses the auto-judge correctly. **Caveat:** as of cxas-scrapi 1.2.0 the `cxas run` command prints `FINAL RESULT: FAIL` but still returns exit code 0 in some configurations — until that's fixed upstream, scrape stdout for `FINAL RESULT:` instead of relying on the exit code (the automated CI/CD gate will).
 
 Audio modality re-runs the same Goldens with TTS+STT round-trip. Tag relevant Goldens with `audio_critical` and run with `--modality audio --tags audio_critical`. Audio runs are slow (multiple seconds per turn) — only tag conversations where TTS-specific issues matter.
 
@@ -157,7 +154,7 @@ Six sub-agents available, dispatched via the Agent tool with the contents of `.a
 
 **`cxas-sim-eval`** — Converts CXAS golden evaluations to SCRAPI SimulationEvals test cases. We currently hand-author Simulations from Goldens; this skill could automate that pass.
 
-**Coexistence with superpowers skills:** the cxas skills are domain-specific (CES agent lifecycle); the superpowers skills (brainstorming, writing-plans, debugging, TDD) are workflow. They complement.
+**Coexistence with general workflow skills:** the cxas skills are domain-specific (CES agent lifecycle), whereas general agent workflow skills (brainstorming, writing plans, debugging, TDD) are workflow-focused. They complement each other.
 
 **Greenfield setup script (`setup.sh`) is not for this repo.** The bundle's `scripts/setup.sh` looks for cxas-scrapi source in a parent directory and installs it editable. We install cxas-scrapi from PyPI and already have a virtualenv at `.venv/`. Don't run `setup.sh` here.
 
@@ -179,7 +176,7 @@ The git-layer `.githooks/pre-push` runs `cxas lint` before any `git push`; bypas
 
 `.claude/settings.local.json` and `.gemini/settings.local.json` are per-user permission allowlists; gitignored. The team-wide `.claude/settings.json` and `.gemini/settings.json` are committed.
 
-**Drift hook caveat (R1 from the design spec).** The drift hook compares platform state to local state bidirectionally — any difference in either direction blocks the push, including the difference we deliberately created by editing local files in order to push them. If smoke-testing during Phase E rollout confirmed R1, the hook is unwired in `.claude/settings.json` and `.gemini/settings.json` (the script stays in `.agents/skills/...` because skills are frozen). Check whether `pre-agent-push.sh` is still referenced in the settings files; if not, R1 was confirmed and that's the documented state.
+**Drift hook caveat (R1 from the design spec).** The drift hook compares platform state to local state bidirectionally — any difference in either direction blocks the push, including the difference we deliberately created by editing local files in order to push them. If smoke-testing during skills rollout confirmed R1, the hook is unwired in `.claude/settings.json` and `.gemini/settings.json` (the script stays in `.agents/skills/...` because skills are frozen). Check whether `pre-agent-push.sh` is still referenced in the settings files; if not, R1 was confirmed and that's the documented state.
 
 **`cxas pull` overwrites local files.** If the drift hook fires and suggests "Run `cxas pull ...` to merge platform changes first", that command would clobber any local edits. Instead: copy the diverging files to a temp location, run the pull, then merge by hand.
 
@@ -203,7 +200,7 @@ We do **not** use the bundle's `.active-project` pointer file; it's for the bund
 
 ### MCP `update_agent` — deprecated
 
-The `mcp_customer-experience-agent-studio_update_agent` MCP tool was the previous deploy mechanism (pre-Phase A) and is technically still available. **Do not use it for new changes** — it bypasses the cxas source of truth and produces drift between local files and prod. Reserve it only as a worst-case rollback path if `cxas push` itself becomes unusable.
+The `mcp_customer-experience-agent-studio_update_agent` MCP tool was the previous deploy mechanism (prior to the current workflow) and is technically still available. **Do not use it for new changes** — it bypasses the cxas source of truth and produces drift between local files and prod. Reserve it only as a worst-case rollback path if `cxas push` itself becomes unusable.
 
 ## Data pipeline commands
 
