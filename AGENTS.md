@@ -63,7 +63,7 @@ Two built-in tools the agent uses without a tool definition: `end_session` (with
      --location us
    ```
 5. Smoke-test on `https://casino.oliviervg.com`. Until automated CI/CD integration is complete, this is the only behavioral safety net — UI/agent changes are not "done" until exercised in a browser.
-6. If game data changes: re-run the scraper, reload BigQuery (`ovg_casino.games_inventory`), trigger Vertex AI Search re-import. (Unchanged from prior workflow.)
+6. If game data changes: re-run the scraper, reload BigQuery (`ovg_casino.games_inventory`), trigger Vertex AI Search re-import.
 7. Commit and push to a feature branch and open a PR. The PR-based workflow is established; once automated CI/CD is in place, PRs will create ephemeral CES apps and run the full eval matrix automatically.
 
 Project is on `main`; commit author is `Olivier Van Goethem <ovg@google.com>`.
