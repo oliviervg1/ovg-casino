@@ -86,7 +86,7 @@ cxas push \
   --location us
 ```
 
-For the full deploy loop (verify → push → smoke test), see the **Deployment workflow** section in `CLAUDE.md`.
+For the full deploy loop (verify → push → smoke test), see the **Deployment workflow** section in `AGENTS.md`.
 
 ---
 
@@ -156,13 +156,6 @@ The agent is capable of asking users about their preferred themes or playstyles 
 *   It dynamically executes a custom Python Function Tool (`get_responsible_gaming_helpline`) to resolve the appropriate helpline name and phone number depending on the active locale (`en-GB`, `en-US`, `fr-FR`, or `es-ES`).
 *   It responds empathetically using the correct regional organization name and contact number (e.g., *Joueurs Info Service* for French users, *Línea de Ayuda de FEJAR* for Spanish users, and *National Gambling Helpline* for US/UK users), keeping helpline configurations completely isolated from the system instructions.
 *   After offering support, or when a user indicates the conversation is over, the agent utilizes the built-in `end_session` tool (with `reason="gambling_concerns"` or `reason="customer_query_ended"`) to gracefully close the interaction.
-
-### 4. Direct Tool Invocation & Callback Retirement
-To keep the architecture fully native, robust, and easily maintainable, the **Safety_Handler** agent executes all tool calls directly within its prompt instructions rather than relying on custom programmatic handlers or intermediate callbacks:
-*   **Fully Native Flow:** The agent prompt handles all text generation and tool invocation natively, invoking `get_responsible_gaming_helpline` followed directly by `end_session` with appropriate JSON arguments (e.g., `{"reason": "gambling_concerns"}`).
-*   **Zero Programmatic Callbacks:** The legacy "Prompt-First Tool-Injection" pattern and its associated custom Python after-agent callbacks have been completely deprecated and retired, removing custom code surfaces and standardizing on pure, native CX Agent Studio functionality.
-
-
 
 ---
 
