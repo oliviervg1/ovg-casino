@@ -27,7 +27,19 @@
         "groundingLevel": 3.0
       }
     }, {
-      "modalityType": "AUDIO"
+      "modalityType": "AUDIO",
+      "rewriterConfig": {
+        "modelSettings": {
+        }
+      },
+      "summarizationConfig": {
+        "modelSettings": {
+        },
+        "prompt": "Based on the user\u0027s $query, search the $sources for matching casino games. You are currently in this $conversation. YOU MUST output the raw JSON array of the matching games. Each object MUST include `title`, `short_description`, `url`, and `theme`. Do not add markdown or pleasantries, just the JSON string array. Example: [{\"title\": \"Coral Cash\", \"short_description\": \"Play coral slots!\", \"url\": \"https://casino.oliviervg.com/game/coral-cash\", \"theme\": \"Ocean\"}]"
+      },
+      "groundingConfig": {
+        "groundingLevel": 3.0
+      }
     }]
   },
   "executionType": "SYNCHRONOUS",

@@ -145,6 +145,8 @@ conversations:
               query:
                 $matchType: contains
                 value: "aventure"
+            output:
+              response: '[{"title": "Aztec Wheel", "short_description": "Spin the stone wheel!", "url": "https://casino.oliviervg.com/game/aztec-wheel", "theme": "Jungle"}]'
           - action: display_game_widget
             args:
               template_id: "game_carousel"

@@ -137,7 +137,7 @@ def run_tool_tests(config):
 
 
 def trigger_goldens(config, channel, runs):
-    """Trigger golden eval run and return the evaluationRun resource name.
+    """Trigger golden eval run and return the evaluationRun resource name and actual channel.
 
     Extracts the run name from the operation metadata — the platform
     populates the evaluation_run field shortly after the operation starts.
@@ -153,17 +153,33 @@ def trigger_goldens(config, channel, runs):
     app_name = config.get("app_resource")
     if not app_name:
         print("  ERROR: No app_resource in config")
-        return None
+        return None, channel
 
+    client = Evaluations(app_name=app_name, user_agent_extension="skill/cxas-agent-foundry/run-all-evals")
+    actual_channel = channel
     try:
-        client = Evaluations(app_name=app_name, user_agent_extension="skill/cxas-agent-foundry/run-all-evals")
-        response = client.run_evaluation(
-            eval_type="goldens",
-            app_name=app_name,
-            modality=channel,
-            run_count=runs,
-        )
-        print(f"  Golden eval run triggered ({channel}, {runs} runs)")
+        try:
+            response = client.run_evaluation(
+                eval_type="goldens",
+                app_name=app_name,
+                modality=channel,
+                run_count=runs,
+            )
+            print(f"  Golden eval run triggered ({channel}, {runs} runs)")
+        except Exception as e:
+            if "evaluation_audio_recording_config" in str(e) and channel == "audio":
+                print(f"  WARNING: Audio goldens failed to trigger because of missing evaluation_audio_recording_config.")
+                print("  Falling back to trigger goldens in 'text' modality...")
+                actual_channel = "text"
+                response = client.run_evaluation(
+                    eval_type="goldens",
+                    app_name=app_name,
+                    modality="text",
+                    run_count=runs,
+                )
+                print(f"  Golden eval run triggered (text fallback, {runs} runs)")
+            else:
+                raise e
 
         # Poll operation metadata for the evaluation_run field
         for i in range(12):
@@ -173,14 +189,14 @@ def trigger_goldens(config, channel, runs):
             meta._pb.ParseFromString(refreshed.metadata.value)
             if meta.evaluation_run:
                 print(f"  Run: {meta.evaluation_run.split('/')[-1]}")
-                return meta.evaluation_run
+                return meta.evaluation_run, actual_channel
             print(f"  Waiting for run to appear... ({(i+1)*10}s)")
 
         print("  WARNING: Could not extract run name from operation metadata")
-        return None
+        return None, actual_channel
     except Exception as e:
         print(f"  ERROR: Failed to trigger golden run: {e}")
-        return None
+        return None, actual_channel
 
 
 def _wait_for_run(app_name, run_name, timeout=GOLDEN_TIMEOUT):
@@ -290,7 +306,7 @@ def run_sims(channel, runs, priority):
 
 
 def generate_combined_report(golden_run_id, sim_results_path, tool_results_path,
-                              callback_results_path, channel):
+                               callback_results_path, golden_channel, sim_channel):
     """Generate combined HTML report from all result sources."""
     print("\n" + "=" * 60)
     print("GENERATING COMBINED REPORT")
@@ -300,9 +316,9 @@ def generate_combined_report(golden_run_id, sim_results_path, tool_results_path,
     cmd = [sys.executable, report_script]
 
     if golden_run_id:
-        cmd.extend(["--golden-run", golden_run_id, "--golden-modality", channel])
+        cmd.extend(["--golden-run", golden_run_id, "--golden-modality", golden_channel])
     if sim_results_path:
-        cmd.extend(["--sim-results", sim_results_path, "--sim-modality", channel])
+        cmd.extend(["--sim-results", sim_results_path, "--sim-modality", sim_channel])
     if tool_results_path:
         cmd.extend(["--tool-results", tool_results_path])
     if callback_results_path:
@@ -382,10 +398,11 @@ def main():
     overall_start = time.time()
     golden_run_name = None
     golden_run_id = None
+    golden_channel = channel
 
     # --- Step 1: Trigger goldens early (they run async on the platform) ---
     if not args.skip_goldens:
-        golden_run_name = trigger_goldens(config, channel, args.runs)
+        golden_run_name, golden_channel = trigger_goldens(config, channel, args.runs)
 
     # --- Step 2: While goldens are running, execute local tests ---
     callback_results_path = run_callback_tests()
@@ -406,7 +423,8 @@ def main():
         sim_results_path=sim_results_path,
         tool_results_path=tool_results_path,
         callback_results_path=callback_results_path,
-        channel=channel,
+        golden_channel=golden_channel,
+        sim_channel=channel,
     )
 
     # --- Final summary ---
