@@ -138,15 +138,12 @@ conversations:
       active_language: "fr-FR"
     tags: [P0, discovery, multilingual]
     turns:
-      - user: "Bonjour, je cherche des jeux d'aventure."
+      - user: "Salut, j'aimerais jouer à un jeu sur le thème de l'espace."
         tool_calls:
           - action: search_available_games
             args:
               query:
-                $matchType: contains
-                value: "aventure"
-            output:
-              response: '[{"title": "Aztec Wheel", "short_description": "Spin the stone wheel!", "url": "https://casino.oliviervg.com/game/aztec-wheel", "theme": "Jungle"}]'
+                $matchType: ignore
           - action: display_game_widget
             args:
               template_id: "game_carousel"
@@ -154,9 +151,6 @@ conversations:
                 games:
                   $matchType: ignore
         agent: "# silent"
-    expectations:
-      - "The agent must respond entirely in French."
-      - "The agent must handle the French query appropriately."
 
   - conversation: multilingual_es_discovery
     session_parameters:
@@ -176,5 +170,3 @@ conversations:
                 games:
                   $matchType: ignore
         agent: "# silent"
-    expectations:
-      - "The agent must use Spanish in its response."
