@@ -31,7 +31,7 @@ The agent has three tightly coupled surfaces. Changes to one usually require coo
 
 3. **Frontend rich-UI rendering** — `scripts/frontend_widget.html` is a snippet embedded on `casino.oliviervg.com`. It registers a Handlebars template named `game_carousel` with `ces-messenger`, and the agent's `display_game_widget` Client Function Tool emits `{template_id: "game_carousel", context: {games: [...]}}` which `ces-messenger` intercepts and renders. The same snippet also passes `user_first_name` from Firebase auth into the agent via `setQueryParameters`, and listens for `ces-end-session` to close/clear the chat when the agent calls `end_session`.
 
-Two built-in tools the agent uses without a tool definition: `end_session` (with `reason="customer_query_ended"` or `reason="responsible_"`).
+Two built-in tools the agent uses without a tool definition: `end_session` (with `reason="customer_query_ended"` or `reason="responsible_gambling"`).
 
 ## CX Agent Studio conventions (non-obvious)
 
@@ -44,7 +44,7 @@ Two built-in tools the agent uses without a tool definition: `end_session` (with
 - **Vertex AI Search BigQuery import:** When importing structured data from BigQuery, the system defaults to looking for an `_id` column. Our schema uses `id`, so the import payload must include `"idField": "id"` or ingestion fails silently.
 - **Anti-hallucination:** Constraints in the prompt forbid recommending any game not returned by `search_available_games`. Don't loosen this without considering the regulatory framing (responsible gaming).
 - **Tone budget:** Voice is `en-US-Chirp3-HD-Zephyr`. Persona is **warm, upbeat, approachable, professional, and responsible**. Keep agent responses to 2–3 short sentences so TTS doesn't monologue.
-- **`end_session` positioning (Direct Native Invocation):** When a user expresses gambling distress or underage signals, the root agent transfers immediately to `Safety_Handler`. The sub-agent is instructed to natively call the custom python function `get_responsible_gaming_helpline` to dynamically retrieve the correct, locale-aware helpline details, and then directly issue the built-in `end_session` tool call (with `reason="responsible_"`) within its prompt instructions. The legacy "Prompt-First Tool-Injection Pattern" and all associated custom Python after-agent callbacks have been completely deprecated and removed to maintain a fully native, callback-free, and tool-driven architecture.
+- **`end_session` positioning (Direct Native Invocation):** When a user expresses gambling distress or underage signals, the root agent transfers immediately to `Safety_Handler`. The sub-agent is instructed to natively call the custom python function `get_responsible_gaming_helpline` to dynamically retrieve the correct, locale-aware helpline details, and then directly issue the built-in `end_session` tool call (with `reason="responsible_gambling"`) within its prompt instructions. The legacy "Prompt-First Tool-Injection Pattern" and all associated custom Python after-agent callbacks have been completely deprecated and removed to maintain a fully native, callback-free, and tool-driven architecture.
 
 ## Deployment workflow
 
