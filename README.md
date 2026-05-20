@@ -15,30 +15,37 @@ The Casino Concierge is designed to act as a highly knowledgeable, vibrant, and 
 ```text
 ovg-casino-concierge/
 ├── README.md                       # Project overview, architecture, and setup instructions
-├── CLAUDE.md                       # Working instructions for Claude Code (and any other coding agent)
-├── cxas_app/                       # Source of truth for the CES agent (cxas-scrapi layout)
+├── AGENTS.md                       # Core orchestration and CLI setup guidelines
+├── CLAUDE.md                       # Working instructions symlink pointing to AGENTS.md
+├── GEMINI.md                       # Working instructions symlink pointing to AGENTS.md
+├── FUTURE_ENHANCEMENTS.md         # Retrospective review and upcoming safety/platform roadmap
+├── gecx-config.json                # Project anchor configuration linking GECX apps/IDs
+├── cxaslint.yaml                   # Strict GECX linter policy overrides and suppressions
+├── cxas_app/                       # Pull/push synchronization directory for CES apps
 │   └── Casino_Concierge/
-│       ├── app.json                # App config: voice, locales, model, guardrails, logging
-│       ├── environment.json        # Per-env values resolved into tool $env_var placeholders
-│       ├── agents/Casino_Concierge/
-│       │   ├── Casino_Concierge.json   # Agent metadata
-│       │   └── instruction.txt         # XML-tagged system prompt (canonical)
-│       ├── tools/
-│       │   ├── search_available_games/ # Datastore tool → Vertex AI Search
-│       │   └── display_game_widget/    # Client function tool → Handlebars carousel
-│       ├── guardrails/                 # Native CES guardrails (Prompt + Safety)
-│       └── evaluations/                # Native CES evaluations (expanded evaluation suites)
+│       ├── app.json                # App-level config: voice, locales, model, guardrails, logging
+│       ├── environment.json        # Dynamic env variable resolution placeholders
+│       ├── agents/
+│       │   ├── Casino_Concierge/   # Root agent (instruction.txt system prompt, Casino_Concierge.json)
+│       │   └── Safety_Handler/     # Sub-agent (gambling distress/underage handler, Safety_Handler.json)
+│       └── tools/
+│           ├── search_available_games/ # Datastore tool querying Vertex AI Search index
+│           ├── display_game_widget/    # Client function tool rendering Handlebars carousel
+│           └── get_responsible_gaming_helpline/ # Custom Python client function tool (locale helplines)
+├── evals/                          # Local platform golden tests and simulator assertions
+│   ├── goldens/                    # Platform Golden YAMLs (boundaries, discovery, explanations, safety)
+│   └── simulations/                # Multi-turn user-emulated simulation test scenarios
 ├── data/
-│   ├── raw/games.md                # Human-readable catalog of all 24 games
+│   ├── raw/games.md                # Human-readable games catalog (markdown mirror)
 │   └── processed/
-│       ├── games_catalog.csv       # Structured catalog for BigQuery / Vertex AI Search
-│       └── schema.json             # BigQuery schema for games_inventory
+│       ├── games_catalog.csv       # Structured catalog feeding BQ and Vertex AI Search Data Store
+│       └── schema.json             # BigQuery schema specification for games_inventory
 ├── scripts/
-│   ├── parse_games_to_csv.py       # Scrapes casino frontend bundle → games_catalog.csv
-│   ├── update_games_md.py          # Regenerates games.md from the CSV
-│   └── frontend_widget.html        # Embedded snippet for casino.oliviervg.com (Handlebars carousel)
-├── .env                            # Google Cloud env vars (gitignored)
-└── .venv/                          # Python virtual environment (gitignored)
+│   ├── parse_games_to_csv.py       # Scraper extracting games data from casino JS bundle
+│   ├── update_games_md.py          # Script generating games.md mirror from catalog CSV
+│   ├── frontend_widget.html        # Embedded integration snippet for casino.oliviervg.com
+│   └── delete_orphan_eval.sh       # Script for cleaning up orphan evals on the platform
+└── .venv/                          # Local Python virtual environment (gitignored)
 ```
 
 ## Local development
@@ -91,7 +98,7 @@ Eval YAML lives at `evals/`:
 - `evals/goldens/discovery.yaml` — 8 conversations validating game discovery, widget triggering, refined and vague search fallback, and multilingual search.
 - `evals/goldens/explanations.yaml` — 3 conversations for game rules and mechanics explanations (Roulette, Slots, Bingo).
 - `evals/goldens/safety.yaml` — 11 conversations validating underage disclosures, financial distress, gambling addiction triggers, and proper helpline warning / session termination.
-- `evals/simulations/multi_turn.yaml` — 5 multi-turn LLM-driven scripted user journeys.
+- `evals/simulations/simulations.yaml` — 5 multi-turn LLM-driven scripted user journeys.
 
 Quick reference (run from repo root with the venv active):
 
