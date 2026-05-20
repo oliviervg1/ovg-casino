@@ -15,13 +15,20 @@ The canonical CLI for managing the agent is [`cxas-scrapi`](https://googlecloudp
 The agent has three tightly coupled surfaces. Changes to one usually require coordinated changes to the others:
 
 1. **Agent definition** — `cxas_app/Casino_Concierge/` is the source of truth, pulled from CES via `cxas pull` and pushed back via `cxas push`. Key files inside it:
-   - `agents/Casino_Concierge/instruction.txt` — the system prompt itself. XML-tagged sections (`<role>`, `<persona>`, `<constraints>`, `<taskflow>`, `<examples>`). All persona/tool-usage/tone changes start here.
-   - `app.json` — app-level config: voice, multilingual locales, model, guardrails attached, logging settings.
-   - `environment.json` — env-specific values that the tool definitions reference via `$env_var` placeholders (e.g., the Vertex AI Search engine + datastore resource paths).
-   - `tools/{search_available_games,display_game_widget}/<name>.json` — tool definitions.
-   - `guardrails/{Prompt,Safety}_Guardrail_*/<name>.json` — CES native guardrails attached to the app (already configured in prod).
-   * `evaluations/<name>/<name>.json` — CES native evaluations (synced from `evals/goldens/*.yaml`).
-   2. **Game catalog data pipeline** — game data is scraped from the casino frontend JS bundle, written to `data/processed/games_catalog.csv` (matches `data/processed/schema.json`, includes a `url` column), loaded into BigQuery (`ovg_casino.games_inventory`), then indexed by a Vertex AI Search Data Store (`ovg_casino_games_catalog`) + Engine (`ovg_casino_games_engine`). The agent calls a Datastore Tool named `search_available_games` against this index. A human-readable mirror lives at `data/raw/games.md` (regenerated from the CSV; includes direct game URLs).
+   - **Root Agent (`Casino_Concierge`)**:
+     - `agents/Casino_Concierge/instruction.txt` — system prompt for the primary VIP host. XML-tagged sections (`<role>`, `<persona>`, `<constraints>`, `<taskflow>`, `<examples>`). Handles discovery, game explanations, and transfer decisions.
+     - `agents/Casino_Concierge/Casino_Concierge.json` — Root agent declaration with `childAgents` mapping.
+   - **Sub-Agent (`Safety_Handler`)**:
+     - `agents/Safety_Handler/instruction.txt` — system prompt for safety. Handles gambling distress and underage signals.
+     - `agents/Safety_Handler/Safety_Handler.json` — sub-agent declaration with callback mappings.
+     - `agents/Safety_Handler/after_model_callbacks/ensure_helpline_text/python_code.py` — Python callback to programmatically append terminal `end_session` tool calls.
+   - **App Configuration**:
+     - `app.json` — app-level config: voice, multilingual locales, model, guardrails attached, logging settings.
+     - `environment.json` — env-specific values referenced via `$env_var` placeholders (e.g., Vertex AI Search paths).
+     - `tools/{search_available_games,display_game_widget}/<name>.json` — tool definitions.
+     - `guardrails/{Prompt,Safety}_Guardrail_*/<name>.json` — CES native guardrails attached to the app.
+     - `evaluations/<name>/<name>.json` — CES native evaluations (synced from `evals/goldens/*.yaml`).
+2. **Game catalog data pipeline** — game data is scraped from the casino frontend JS bundle, written to `data/processed/games_catalog.csv` (matches `data/processed/schema.json`, includes a `url` column), loaded into BigQuery (`ovg_casino.games_inventory`), then indexed by a Vertex AI Search Data Store (`ovg_casino_games_catalog`) + Engine (`ovg_casino_games_engine`). The agent calls a Datastore Tool named `search_available_games` against this index. A human-readable mirror lives at `data/raw/games.md` (regenerated from the CSV; includes direct game URLs).
 
 3. **Frontend rich-UI rendering** — `scripts/frontend_widget.html` is a snippet embedded on `casino.oliviervg.com`. It registers a Handlebars template named `game_carousel` with `ces-messenger`, and the agent's `display_game_widget` Client Function Tool emits `{template_id: "game_carousel", context: {games: [...]}}` which `ces-messenger` intercepts and renders. The same snippet also passes `user_first_name` from Firebase auth into the agent via `setQueryParameters`, and listens for `ces-end-session` to close/clear the chat when the agent calls `end_session`.
 
@@ -38,7 +45,9 @@ Two built-in tools the agent uses without a tool definition: `end_session` (with
 - **Vertex AI Search BigQuery import:** When importing structured data from BigQuery, the system defaults to looking for an `_id` column. Our schema uses `id`, so the import payload must include `"idField": "id"` or ingestion fails silently.
 - **Anti-hallucination:** Constraints in the prompt forbid recommending any game not returned by `search_available_games`. Don't loosen this without considering the regulatory framing (responsible gaming).
 - **Tone budget:** Voice is `en-US-Chirp3-HD-Zephyr`. Persona is **warm, upbeat, approachable, professional, and responsible**. Keep agent responses to 2–3 short sentences so TTS doesn't monologue.
-- **`end_session` positioning:** When the user says goodbye or expresses gambling distress, the agent must execute `end_session` immediately. *Audio Modality Caveat:* The `gemini-3.1-flash-live` model may suppress tool calls if it generates a long text response first. Instructions must explicitly prioritize the tool call and limit the accompanying text to a single, brief sentence to ensure `end_session` executes reliably over voice. Examples in `<examples>` enforce this pattern.
+- **`end_session` positioning (Prompt-First Tool-Injection):** When a user expresses gambling distress or underage signals, the root agent transfers immediately to `Safety_Handler`. To resolve platform-level audio modality tool-call dropouts on `gemini-3.1-flash-live` (where generating a long empathetic text and executing a terminal action in the same turn often drops the text response), we employ the **Prompt-First Tool-Injection Pattern**:
+  1. **Text-Only Prompt:** The `Safety_Handler` prompt generates the text response (helpline) in the appropriate language and is kept entirely text-only with no staging or terminal tool call instructions.
+  2. **Programmatic Callback Injection:** The `ensure_helpline_text` after-model callback programmatically appends the `end_session` tool call to the response in memory, guaranteeing 100% reliable terminal execution.
 
 ## Deployment workflow
 

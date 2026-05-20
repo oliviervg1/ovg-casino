@@ -88,9 +88,10 @@ For the full deploy loop (verify → push → smoke test), see the **Deployment 
 
 Eval YAML lives at `evals/`:
 
-- `evals/goldens/happy_path.yaml` — 10 single-turn conversions of the prompt's example dialogue (P0, happy_path, audio_critical tags).
-- `evals/goldens/tool_usage.yaml` — 5 conversations asserting tool-call contracts (search → widget, end_session reasons).
-- `evals/goldens/jailbreak.yaml` — 18 conversations across 5 attack families (prompt_injection, roleplay_override, scope_creep, win_guarantee, underage). Threshold: 100% pass.
+- `evals/goldens/boundaries.yaml` — 5 conversations for platform-level and persona boundaries (AI identity disclosure, out-of-scope weather, persona override attempts, account access, instruction leakage).
+- `evals/goldens/discovery.yaml` — 8 conversations validating game discovery, widget triggering, refined and vague search fallback, and multilingual search.
+- `evals/goldens/explanations.yaml` — 3 conversations for game rules and mechanics explanations (Roulette, Slots, Bingo).
+- `evals/goldens/safety.yaml` — 11 conversations validating underage disclosures, financial distress, gambling addiction triggers, and proper helpline warning / session termination.
 - `evals/simulations/multi_turn.yaml` — 5 multi-turn LLM-driven scripted user journeys.
 
 Quick reference (run from repo root with the venv active):
@@ -99,14 +100,19 @@ Quick reference (run from repo root with the venv active):
 PROD_APP=projects/bigquery-demo-396708/locations/us/apps/c4242f9c-3b93-4c92-a69c-a035daabc0c8
 
 # Push Goldens after editing (idempotent on display_name)
-cxas push-eval --app-name $PROD_APP --file evals/goldens/happy_path.yaml
-cxas push-eval --app-name $PROD_APP --file evals/goldens/tool_usage.yaml
-cxas push-eval --app-name $PROD_APP --file evals/goldens/jailbreak.yaml
+cxas push-eval --app-name $PROD_APP --file evals/goldens/boundaries.yaml
+cxas push-eval --app-name $PROD_APP --file evals/goldens/discovery.yaml
+cxas push-eval --app-name $PROD_APP --file evals/goldens/explanations.yaml
+cxas push-eval --app-name $PROD_APP --file evals/goldens/safety.yaml
 
 # Run a tagged Goldens subset against prod
-cxas run --app-name $PROD_APP --tags happy_path --wait
-cxas run --app-name $PROD_APP --tags tool_usage --wait
-cxas run --app-name $PROD_APP --tags jailbreak  --wait
+cxas run --app-name $PROD_APP --tags boundaries --wait
+cxas run --app-name $PROD_APP --tags discovery  --wait
+cxas run --app-name $PROD_APP --tags explanations --wait
+cxas run --app-name $PROD_APP --tags safety --wait
+
+# Run ALL P0 evaluations on GECX
+cxas run --app-name $PROD_APP --tags P0 --wait
 
 # Audio re-run of audio_critical conversations
 cxas run --app-name $PROD_APP --tags audio_critical --modality audio --wait
@@ -144,9 +150,14 @@ The agent is capable of asking users about their preferred themes or playstyles 
 *   It is instructed to provide an empathetic response and offer the UK National Gambling Helpline (`0808 8020 133`).
 *   After offering support, or when a user indicates the conversation is over, the agent utilizes the built-in `end_session` tool (with `reason="gambling_concerns"` or `reason="customer_query_ended"`) to gracefully close the interaction.
 
+### 4. Prompt-First Tool-Injection Pattern
+To solve platform-level terminal action text-dropout bugs in voice and chat modalities, the **Safety_Handler** sub-agent decouples text generation from tool execution:
+*   **Text-Only Prompt:** The prompt is kept entirely text-only with NO staging or terminal tool instructions, ensuring GECX never intercepts the turn prematurely and the LLM consistently generates the full, empathetic helpline text across English, French, and Spanish.
+*   **Programmatic Tool Injection:** An after-model Python callback (`ensure_helpline_text`) intercepts the response in memory and programmatically appends the native `end_session` tool call, ensuring immediate, reliable session termination following the message delivery.
+
 ---
 
 ## Technical Learnings & Troubleshooting
 *   **Vertex AI Search - BigQuery Structured Import:** When importing custom structured data from BigQuery into a Vertex AI Search Data Store, the system defaults to looking for a column named `_id`. If your unique identifier column is named something else (e.g., `id`), you must explicitly define `"idField": "id"` in the API request payload, otherwise the ingestion will fail.
-*   **CX Agent Studio - Tool Execution Syntax:** To instruct an agent to execute a tool in CX Agent Studio, you do not use the raw `${TOOL:}` syntax in the instruction prompt. Instead, provide clear natural language directions in the `<taskflow>`'s `<action>` block (e.g., *"...execute the `end_session` tool with arguments reason='customer_query_ended'."*).
+*   **CX Agent Studio - Tool & Agent References:** Use the canonical CES forms `{@TOOL: tool_name}` and `{@AGENT: Agent Name}` for tool and agent references that the LLM should resolve (enforced by linter rule `I011`). Do not use the older Dialogflow CX form `${TOOL:tool_name}`. Inside simulated dialogue examples, the literal `<agent>Execute tool \`tool_name\` with arguments ...</agent>` pattern followed by a `<tool_response>` block is used to show simulated calls.
 *   **Voice Model Selection:** For virtual agents requiring a warm, hospitable persona, the latest `Chirp3-HD` models (`en-US-Chirp3-HD-...`) provide significantly better conversational intonation and lower latency compared to older `Standard` or `News` models.
