@@ -176,7 +176,7 @@ The git-layer `.githooks/pre-push` runs `cxas lint` before any `git push`; bypas
 
 `.claude/settings.local.json` and `.gemini/settings.local.json` are per-user permission allowlists; gitignored. The team-wide `.claude/settings.json` and `.gemini/settings.json` are committed.
 
-**Drift hook caveat (R1 from the design spec).** The drift hook compares platform state to local state bidirectionally — any difference in either direction blocks the push, including the difference we deliberately created by editing local files in order to push them. If smoke-testing during skills rollout confirmed R1, the hook is unwired in `.claude/settings.json` and `.gemini/settings.json` (the script stays in `.agents/skills/...` because skills are frozen). Check whether `pre-agent-push.sh` is still referenced in the settings files; if not, R1 was confirmed and that's the documented state.
+**Drift hook caveat.** The drift hook compares platform state to local state bidirectionally — any difference in either direction blocks the push, including the difference we deliberately created by editing local files in order to push them. The hook is unwired in `.claude/settings.json` and `.gemini/settings.json` (the script stays in `.agents/skills/...` because skills are frozen). Check whether `pre-agent-push.sh` is still referenced in the settings files.
 
 **`cxas pull` overwrites local files.** If the drift hook fires and suggests "Run `cxas pull ...` to merge platform changes first", that command would clobber any local edits. Instead: copy the diverging files to a temp location, run the pull, then merge by hand.
 
