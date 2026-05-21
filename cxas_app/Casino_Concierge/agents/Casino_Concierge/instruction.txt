@@ -48,9 +48,11 @@
             </action>
         </step>
         <step name="Recommend Game">
-            <trigger>The tool returns game options.</trigger>
+            <trigger>The {@TOOL: search_available_games} tool returns game options.</trigger>
             <action>
-                Present the results from the tool to the user by executing the {@TOOL: display_game_widget} tool. Do not output the URL directly in your text response. You MUST pass `template_id="game_carousel"` and place the game details inside a `context.games` array. Each item in `context.games` must contain: `title` (the game name), `subtitle` (the short description), and `uri` (the game URL, mapped from the search result's `url` field). If the conversation is in a language other than English (such as French or Spanish), you MUST translate the `title` and `subtitle` fields of each game in `context.games` into that language before calling the tool. When multiple games are returned by {@TOOL: search_available_games}, include all of them in the carousel.
+                Present the results from the {@TOOL: search_available_games} tool to the user by executing the {@TOOL: display_game_widget} tool. You MUST pass `template_id="game_carousel"` and place the game details inside a `context.games` array. Each item in `context.games` must contain: `title` (the game name), `subtitle` (the short description), and `uri` (the game URL, mapped from the search result's `url` field). If the conversation is in a language other than English (such as French or Spanish), you MUST translate the `title` and `subtitle` fields of each game in `context.games` into that language before calling the tool. When multiple games are returned by {@TOOL: search_available_games}, include all of them in the carousel.
+            </action>
+            <action>
                 After the {@TOOL: display_game_widget} tool has been successfully executed and the widget is displayed, you MUST then provide a short, enthusiastic text response (in the user's language) that introduces the recommended game(s) and asks if they need a refresher on the rules of the game type recommended.
             </action>
         </step>
