@@ -71,6 +71,10 @@ results.tsv
 *.json
 !cxas_app/**/*.json
 !gecx-config.json
-!.claude/*.json
-!.gemini/*.json
+!.claude/settings.json
+!.gemini/settings.json
 !data/processed/*.json
+
+# Personal scratch space (per-developer working notes, not project artifacts)
+scratch/
+todo.md
