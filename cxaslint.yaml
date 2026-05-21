@@ -31,14 +31,6 @@ rules:
   # google.cloud.ces.v1beta.DataStore message includes engineType.
   V003: off  # schema-tool-valid: engineType field absent from v1beta proto
 
-  # TODO: revisit. Fires on the no-results fallback and silence-detection
-  # triggers in instruction.txt. Both are legitimately about a negative
-  # condition, and the obvious rewrites ("an empty list", "the silence count
-  # is zero") read awkwardly. Worth a focused prompt-improvement pass to find
-  # phrasings that satisfy the rule without losing clarity. Until then,
-  # downgraded to info so the warning stays visible.
-  I004: info  # negative-triggers
-
 # Run `cxas lint --list-rules` to see all available rules and their default
 # severities. The full catalog is intentionally NOT mirrored here (decay risk).
 
